@@ -34,21 +34,19 @@ export function runSeed(db = getDb()) {
     DELETE FROM users;
   `);
 
-  // 2. Users (Admin, Worker, Mom)
+  // 2. Users (Admin and Staff)
   const adminId = crypto.randomUUID();
-  const workerId = crypto.randomUUID();
-  const momId = crypto.randomUUID();
+  const staffId = crypto.randomUUID();
 
   const insertUser = db.prepare(`
     INSERT INTO users (id, name, role, pin_hash, is_active, created_at)
     VALUES (?, ?, ?, ?, 1, datetime('now', 'localtime'))
   `);
 
-  insertUser.run(adminId, 'Ankith (Owner / Admin)', 'admin', hashPin('1234'));
-  insertUser.run(workerId, 'Raju (Store Cashier)', 'cashier', hashPin('0000'));
-  insertUser.run(momId, 'Mother (Cashier Mode)', 'cashier', hashPin('1111'));
+  insertUser.run(adminId, 'Admin', 'admin', hashPin('1234'));
+  insertUser.run(staffId, 'Staff', 'cashier', hashPin('0000'));
 
-  console.log('[Seed] Created users: Admin (PIN: 1234), Worker (PIN: 0000), Mom (PIN: 1111)');
+  console.log('[Seed] Created users: Admin (PIN: 1234), Staff (PIN: 0000)');
 
   // 3. Categories
   const categories = [
@@ -193,12 +191,12 @@ export function runSeed(db = getDb()) {
     dateObj.setDate(dateObj.getDate() - d);
     const dateStr = dateObj.toISOString().slice(0, 10);
 
-    // Morning shift (Raju 7:00 AM - 12:00 PM)
+    // Morning shift (Staff 7:00 AM - 12:00 PM)
     const sId1 = crypto.randomUUID();
     shifts.push(sId1);
     shiftInsert.run(
       sId1,
-      workerId,
+      staffId,
       `${dateStr} 07:00:00`,
       `${dateStr} 12:00:00`,
       100000, // ₹1,000 opening cash
@@ -208,12 +206,12 @@ export function runSeed(db = getDb()) {
       'Morning store shift'
     );
 
-    // Evening shift (Admin / Mom 12:00 PM - 9:00 PM)
+    // Evening shift (Admin 12:00 PM - 9:00 PM)
     const sId2 = crypto.randomUUID();
     shifts.push(sId2);
     shiftInsert.run(
       sId2,
-      d % 2 === 0 ? adminId : momId,
+      adminId,
       `${dateStr} 12:00:00`,
       `${dateStr} 21:00:00`,
       154000,
@@ -229,7 +227,7 @@ export function runSeed(db = getDb()) {
   db.prepare(`
     INSERT INTO shifts (id, user_id, started_at, opening_cash, status, notes)
     VALUES (?, ?, datetime('now', '-2 hours', 'localtime'), 150000, 'open', 'Current active counter shift')
-  `).run(activeShiftId, workerId);
+  `).run(activeShiftId, staffId);
 
   // Insert Bills across shifts
   const insertBill = db.prepare(`
@@ -338,7 +336,7 @@ export function runSeed(db = getDb()) {
         billNo,
         status,
         shiftId,
-        sIdx % 2 === 0 ? workerId : adminId,
+        sIdx % 2 === 0 ? staffId : adminId,
         subtotal,
         discountTotal,
         0,
@@ -376,7 +374,7 @@ export function runSeed(db = getDb()) {
             reason: `Sale ${billNo}`,
             referenceType: 'bill',
             referenceId: billId,
-            userId: workerId,
+            userId: staffId,
           });
         }
       }
@@ -403,7 +401,7 @@ export function runSeed(db = getDb()) {
     db.prepare(`
       INSERT INTO returns (id, original_bill_id, return_number, reason, refund_method, refund_amount, user_id, approved_by, created_at)
       VALUES (?, ?, 'RET-00101', 'Damaged seal on delivery', 'cash', 8000, ?, ?, datetime('now', 'localtime'))
-    `).run(returnId, sampleBill.id, workerId, adminId);
+    `).run(returnId, sampleBill.id, staffId, adminId);
 
     db.prepare(`
       INSERT INTO return_items (id, return_id, product_id, item_name, qty, unit_price, total_amount, restock)

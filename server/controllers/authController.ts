@@ -118,4 +118,22 @@ export class AuthController {
       res.status(400).json({ error: err.message });
     }
   }
+
+  static async updateProfile(req: AuthenticatedRequest, res: Response): Promise<void> {
+    const db = getDb();
+    const { name } = req.body;
+
+    if (!name || typeof name !== 'string' || !name.trim()) {
+      res.status(400).json({ error: 'Name is required.' });
+      return;
+    }
+
+    try {
+      const { updateUserName } = await import('../services/authService');
+      const updatedUser = updateUserName(db, req.user!.userId, name);
+      res.json({ user: updatedUser });
+    } catch (err: any) {
+      res.status(400).json({ error: err.message });
+    }
+  }
 }

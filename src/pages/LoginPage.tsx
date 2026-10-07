@@ -110,8 +110,8 @@ export const LoginPage: React.FC = () => {
           </div>
         )}
 
-        {/* User Selection Tiles */}
-        <div className="grid grid-cols-3 gap-2">
+        {/* User Selection Tiles (Admin & Staff) */}
+        <div className="grid grid-cols-2 gap-3">
           {users.map((u) => {
             const isSelected = u.id === selectedUserId;
             return (
@@ -123,20 +123,20 @@ export const LoginPage: React.FC = () => {
                   setPin('');
                   setErrorMsg(null);
                 }}
-                className={`p-2 rounded-xl border text-center transition-all flex flex-col items-center gap-1 ${
+                className={`p-3 rounded-2xl border text-center transition-all flex flex-col items-center gap-1.5 ${
                   isSelected
                     ? 'bg-coastal-700 text-white border-coastal-400 shadow-sm ring-2 ring-coastal-400/30'
                     : 'bg-slate-700/50 text-slate-300 border-slate-600 hover:bg-slate-700'
                 }`}
               >
-                <div className="w-7 h-7 rounded-full bg-slate-600/80 flex items-center justify-center font-bold text-xs">
+                <div className="w-9 h-9 rounded-full bg-slate-600/80 flex items-center justify-center font-bold text-sm">
                   {u.name.slice(0, 1)}
                 </div>
-                <div className="font-bold text-xs truncate max-w-full leading-tight">
-                  {u.name.split(' ')[0]}
+                <div className="font-bold text-sm truncate max-w-full leading-tight">
+                  {u.name}
                 </div>
-                <span className="text-[9px] uppercase font-semibold text-slate-400">
-                  {u.role}
+                <span className="text-[10px] uppercase font-semibold text-slate-400">
+                  {u.role === 'admin' ? 'Administrator' : 'Staff / Cashier'}
                 </span>
               </button>
             );
@@ -194,8 +194,7 @@ export const LoginPage: React.FC = () => {
           <div className="p-2 rounded-lg bg-slate-900/60 border border-slate-700/70 text-center text-[10px] text-slate-400">
             <span>Demo PINs: </span>
             <strong className="text-coastal-300">Admin: 1234</strong> •{' '}
-            <strong className="text-coastal-300">Worker: 0000</strong> •{' '}
-            <strong className="text-coastal-300">Mom: 1111</strong>
+            <strong className="text-coastal-300">Staff: 0000</strong>
           </div>
         </form>
       </div>

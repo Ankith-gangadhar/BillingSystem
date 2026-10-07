@@ -223,6 +223,19 @@ export function verifyAdminPin(
   return { success: false, error: 'Invalid Admin PIN or admin account locked' };
 }
 
+export function updateUserName(db: Database, userId: string, newName: string): User {
+  const trimmed = newName.trim();
+  if (!trimmed) {
+    throw new Error('Name cannot be empty.');
+  }
+  db.prepare('UPDATE users SET name = ? WHERE id = ?').run(trimmed, userId);
+  const updated = db.prepare('SELECT id, name, role, is_active, failed_attempts, locked_until, created_at FROM users WHERE id = ?').get(userId) as User;
+  if (!updated) {
+    throw new Error('User not found.');
+  }
+  return updated;
+}
+
 // Strip Confidential Financial Fields for Cashiers
 export function sanitizeProductForCashier<T extends Record<string, any>>(product: T): T {
   const copy: any = { ...product };

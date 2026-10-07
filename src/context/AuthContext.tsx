@@ -14,6 +14,7 @@ interface AuthContextType {
   logout: () => void;
   lockSession: () => void;
   toggleOwnerPresence: (enabled: boolean, adminPin?: string) => Promise<void>;
+  updateProfileName: (newName: string) => Promise<void>;
   requestAdminApproval: (actionDescription: string) => Promise<string | null>;
   refreshSettings: () => Promise<void>;
   adminApprovalModal: {
@@ -123,6 +124,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const updateProfileName = async (newName: string) => {
+    try {
+      const data = await apiRequest<{ user: User }>('/auth/profile', {
+        method: 'PUT',
+        body: JSON.stringify({ name: newName }),
+      });
+      setUser(data.user);
+      localStorage.setItem('mangalore_pos_user', JSON.stringify(data.user));
+      playPosSound('success');
+    } catch (err: any) {
+      playPosSound('error');
+      throw err;
+    }
+  };
+
   // In-line Admin PIN Prompt Promise
   const requestAdminApproval = useCallback(
     (actionDescription: string): Promise<string | null> => {
@@ -165,6 +181,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         logout,
         lockSession,
         toggleOwnerPresence,
+        updateProfileName,
         requestAdminApproval,
         refreshSettings,
         adminApprovalModal,
