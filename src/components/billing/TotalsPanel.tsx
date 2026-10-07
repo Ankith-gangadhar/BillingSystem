@@ -1,7 +1,7 @@
 import React from 'react';
 import { usePos } from '../../context/PosContext';
 import { useAuth } from '../../context/AuthContext';
-import { Tag, PauseCircle, Trash2, ArrowRight, Sparkles } from 'lucide-react';
+import { Tag, PauseCircle, Trash2, ArrowRight, ShoppingBag, Plus } from 'lucide-react';
 import { formatPaise } from '../../utils/formatters';
 
 export const TotalsPanel: React.FC = () => {
@@ -15,12 +15,27 @@ export const TotalsPanel: React.FC = () => {
     totalItemsCount,
     holdBill,
     clearCart,
+    includeCarryBag,
+    carryBagChargePaise,
+    toggleCarryBag,
+    setCarryBagChargePaise,
     setIsDiscountModalOpen,
     setIsPaymentModalOpen,
   } = usePos();
 
   const { settings } = useAuth();
-  const isEmpty = cart.length === 0;
+  const isEmpty = cart.length === 0 && !includeCarryBag;
+
+  const handleEditBagCharge = () => {
+    const curRs = (carryBagChargePaise / 100).toString();
+    const input = prompt('Enter Carry Bag charge (₹):', curRs);
+    if (input !== null) {
+      const val = parseFloat(input);
+      if (!isNaN(val) && val >= 0) {
+        setCarryBagChargePaise(Math.round(val * 100));
+      }
+    }
+  };
 
   return (
     <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-2.5 sm:p-3 rounded-2xl shadow-xs shrink-0 select-none">
@@ -29,6 +44,30 @@ export const TotalsPanel: React.FC = () => {
         <div className="flex justify-between items-center font-medium">
           <span>Subtotal ({totalItemsCount} items):</span>
           <span className="font-semibold text-slate-900 dark:text-slate-200">{formatPaise(subtotal)}</span>
+        </div>
+
+        {/* Optional Carry Bag Row (Editable) */}
+        <div className="flex items-center justify-between py-1 px-1.5 bg-slate-50 dark:bg-slate-800/40 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/60">
+          <label className="flex items-center gap-1.5 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={includeCarryBag}
+              onChange={(e) => toggleCarryBag(e.target.checked)}
+              className="w-3.5 h-3.5 rounded text-coastal-600 focus:ring-coastal-500 cursor-pointer"
+            />
+            <span className="flex items-center gap-1">
+              <ShoppingBag className="w-3.5 h-3.5 text-slate-400" />
+              <span>Carry Bag (+{formatPaise(carryBagChargePaise)})</span>
+            </span>
+          </label>
+          <button
+            type="button"
+            onClick={handleEditBagCharge}
+            className="text-[10px] text-coastal-600 dark:text-coastal-400 font-bold underline hover:text-coastal-800"
+            title="Edit carry bag price"
+          >
+            Edit (₹{(carryBagChargePaise / 100).toFixed(0)})
+          </button>
         </div>
 
         {totalDiscount > 0 && (
@@ -83,10 +122,10 @@ export const TotalsPanel: React.FC = () => {
           disabled={isEmpty}
           onClick={holdBill}
           className="flex items-center justify-center gap-1 py-1.5 px-1 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-[11px] font-bold transition-all disabled:opacity-40"
-          title="Hold current sale (F6)"
+          title="Hold current sale / Open new cart (F6)"
         >
           <PauseCircle className="w-3 h-3 text-amber-500" />
-          <span>Hold (F6)</span>
+          <span>Hold / New (F6)</span>
         </button>
 
         <button

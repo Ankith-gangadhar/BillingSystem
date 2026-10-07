@@ -129,8 +129,8 @@ export const QuickButtons: React.FC = () => {
         })}
       </div>
 
-      {/* Spacious, Uniform Product Cards (Spacious width, fully readable headings) */}
-      <div className="flex-1 p-2.5 sm:p-3 grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 overflow-y-auto min-h-0">
+      {/* Spacious, Uniform Product Cards (Packed tightly at top with no gap between rows) */}
+      <div className="flex-1 p-2.5 sm:p-3 grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 overflow-y-auto min-h-0 content-start auto-rows-max">
         {displayedProducts.map((prod) => {
           const style = getCategoryTextColor(prod.category_name, prod.category_id);
           const isOutOfStock = prod.current_stock <= 0;

@@ -4,7 +4,25 @@ import { useAuth } from './AuthContext';
 import { apiRequest } from '../utils/api';
 import { playPosSound } from '../utils/formatters';
 
+export interface CartSession {
+  id: string; // 'cart-1', 'cart-2', 'cart-3'
+  label: string; // 'Cart 1', 'Cart 2', 'Cart 3'
+  cart: CartItem[];
+  billDiscountPaise: number;
+  selectedCustomer: Customer | null;
+  includeCarryBag: boolean;
+  carryBagChargePaise: number; // default 1000 = ₹10.00
+}
+
 interface PosContextType {
+  // Multi-cart tabs
+  cartSessions: CartSession[];
+  activeSessionId: string;
+  createCartSession: () => void;
+  switchCartSession: (sessionId: string) => void;
+  closeCartSession: (sessionId: string) => void;
+
+  // Active cart accessors
   cart: CartItem[];
   addItem: (product: any, qty?: number) => void;
   addCustomItem: (name: string, pricePaise: number, qty?: number, unit?: string) => void;
@@ -15,6 +33,13 @@ interface PosContextType {
   billDiscountPaise: number;
   setBillDiscount: (discountPaise: number) => void;
   setFinalPrice: (finalPricePaise: number) => void;
+
+  // Carry Bag
+  includeCarryBag: boolean;
+  carryBagChargePaise: number;
+  toggleCarryBag: (include?: boolean) => void;
+  setCarryBagChargePaise: (paise: number) => void;
+
   selectedCustomer: Customer | null;
   setSelectedCustomer: (cust: Customer | null) => void;
   currentShift: Shift | null;
@@ -23,6 +48,7 @@ interface PosContextType {
   refreshHeldBills: () => Promise<void>;
   holdBill: () => Promise<void>;
   resumeBill: (heldBill: any) => void;
+
   // Calculations
   subtotal: number;
   totalDiscount: number;
@@ -31,6 +57,7 @@ interface PosContextType {
   grandTotal: number;
   totalItemsCount: number;
   lastAddedClientId: string | null;
+
   // Modals & UI triggers
   isCustomItemModalOpen: boolean;
   setIsCustomItemModalOpen: (open: boolean) => void;
@@ -49,11 +76,22 @@ interface PosContextType {
 const PosContext = createContext<PosContextType | undefined>(undefined);
 
 export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, token, settings, requestAdminApproval, isOwnerAtCounter } = useAuth();
+  const { token, settings } = useAuth();
 
-  const [cart, setCart] = useState<CartItem[]>([]);
-  const [billDiscountPaise, setBillDiscountPaise] = useState<number>(0);
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  // Multi-cart sessions state (supports up to 4 concurrent active carts)
+  const [cartSessions, setCartSessions] = useState<CartSession[]>([
+    {
+      id: 'cart-1',
+      label: 'Cart 1',
+      cart: [],
+      billDiscountPaise: 0,
+      selectedCustomer: null,
+      includeCarryBag: false,
+      carryBagChargePaise: 1000, // ₹10 default
+    },
+  ]);
+  const [activeSessionId, setActiveSessionId] = useState<string>('cart-1');
+
   const [currentShift, setCurrentShift] = useState<Shift | null>(null);
   const [heldBillsCount, setHeldBillsCount] = useState<number>(0);
   const [lastAddedClientId, setLastAddedClientId] = useState<string | null>(null);
@@ -65,6 +103,88 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isHeldBillsModalOpen, setIsHeldBillsModalOpen] = useState<boolean>(false);
   const [isReceiptModalOpen, setIsReceiptModalOpen] = useState<boolean>(false);
   const [lastCompletedBill, setLastCompletedBill] = useState<Bill | null>(null);
+
+  const activeSession = useMemo(() => {
+    return cartSessions.find((s) => s.id === activeSessionId) || cartSessions[0];
+  }, [cartSessions, activeSessionId]);
+
+  const cart = activeSession?.cart || [];
+  const billDiscountPaise = activeSession?.billDiscountPaise || 0;
+  const selectedCustomer = activeSession?.selectedCustomer || null;
+  const includeCarryBag = activeSession?.includeCarryBag || false;
+  const carryBagChargePaise = activeSession?.carryBagChargePaise || 1000;
+
+  // Multi-Cart Session Operations
+  const createCartSession = useCallback(() => {
+    setCartSessions((prev) => {
+      if (prev.length >= 4) {
+        alert('Maximum 4 concurrent carts allowed. Please complete or clear one.');
+        return prev;
+      }
+      const newNum = prev.length + 1;
+      const newId = `cart-${Date.now()}`;
+      const newSession: CartSession = {
+        id: newId,
+        label: `Cart ${newNum}`,
+        cart: [],
+        billDiscountPaise: 0,
+        selectedCustomer: null,
+        includeCarryBag: false,
+        carryBagChargePaise: 1000,
+      };
+      setActiveSessionId(newId);
+      return [...prev, newSession];
+    });
+    playPosSound('beep');
+  }, []);
+
+  const switchCartSession = useCallback((sessionId: string) => {
+    setActiveSessionId(sessionId);
+    playPosSound('click');
+  }, []);
+
+  const closeCartSession = useCallback(
+    (sessionId: string) => {
+      setCartSessions((prev) => {
+        if (prev.length <= 1) {
+          // Reset single cart to empty
+          return [
+            {
+              id: 'cart-1',
+              label: 'Cart 1',
+              cart: [],
+              billDiscountPaise: 0,
+              selectedCustomer: null,
+              includeCarryBag: false,
+              carryBagChargePaise: 1000,
+            },
+          ];
+        }
+        const filtered = prev.filter((s) => s.id !== sessionId);
+        if (activeSessionId === sessionId) {
+          setActiveSessionId(filtered[0].id);
+        }
+        return filtered;
+      });
+      playPosSound('click');
+    },
+    [activeSessionId]
+  );
+
+  const updateActiveSession = useCallback(
+    (updater: (prevSession: CartSession) => Partial<CartSession>) => {
+      setCartSessions((prev) =>
+        prev.map((s) => {
+          if (s.id === (activeSession?.id || activeSessionId)) {
+            const updates = updater(s);
+            return { ...s, ...updates };
+          }
+          return s;
+        })
+      );
+    },
+    [activeSession, activeSessionId]
+  );
 
   const refreshShift = useCallback(async () => {
     if (!token) return;
@@ -93,16 +213,17 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [token, refreshShift, refreshHeldBills]);
 
-  // Add standard product to cart
+  // Add standard product to active cart
   const addItem = useCallback(
     (product: any, qtyToAdd: number = 1) => {
-      setCart((prev) => {
-        const existingIndex = prev.findIndex((item) => !item.is_custom && item.product_id === product.id);
+      updateActiveSession((sess) => {
+        const currentCart = sess.cart;
+        const existingIndex = currentCart.findIndex((item) => !item.is_custom && item.product_id === product.id);
         const listPrice = product.selling_price;
         const allowsDecimal = !!product.allows_decimal_qty;
 
         if (existingIndex > -1) {
-          const updated = [...prev];
+          const updated = [...currentCart];
           const current = updated[existingIndex];
           const newQty = Number((current.qty + qtyToAdd).toFixed(allowsDecimal ? 3 : 0));
           const lineTotal = Math.round(current.sold_price * newQty);
@@ -113,7 +234,7 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             line_total: lineTotal,
           };
           setLastAddedClientId(current.clientId);
-          return updated;
+          return { cart: updated };
         }
 
         const newClientId = `cart-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
@@ -137,15 +258,15 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         };
 
         setLastAddedClientId(newClientId);
-        return [newItem, ...prev];
+        return { cart: [newItem, ...currentCart] };
       });
 
       playPosSound('beep');
     },
-    []
+    [updateActiveSession]
   );
 
-  // Add unlisted custom item
+  // Add unlisted custom item to active cart
   const addCustomItem = useCallback(
     (name: string, pricePaise: number, qty: number = 1, unit: string = 'piece') => {
       const newClientId = `custom-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
@@ -168,38 +289,41 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         line_total: Math.round(pricePaise * qty),
       };
 
-      setCart((prev) => [newItem, ...prev]);
+      updateActiveSession((sess) => ({ cart: [newItem, ...sess.cart] }));
       setLastAddedClientId(newClientId);
       playPosSound('beep');
     },
-    [settings]
+    [settings, updateActiveSession]
   );
 
-  const updateQty = useCallback((clientId: string, newQty: number) => {
-    if (newQty <= 0) {
-      removeItem(clientId);
-      return;
-    }
-    setCart((prev) =>
-      prev.map((item) => {
-        if (item.clientId === clientId) {
-          const lineTotal = Math.round(item.sold_price * newQty);
-          return {
-            ...item,
-            qty: newQty,
-            line_total: lineTotal,
-          };
-        }
-        return item;
-      })
-    );
-    playPosSound('click');
-  }, []);
+  const updateQty = useCallback(
+    (clientId: string, newQty: number) => {
+      if (newQty <= 0) {
+        removeItem(clientId);
+        return;
+      }
+      updateActiveSession((sess) => ({
+        cart: sess.cart.map((item) => {
+          if (item.clientId === clientId) {
+            const lineTotal = Math.round(item.sold_price * newQty);
+            return {
+              ...item,
+              qty: newQty,
+              line_total: lineTotal,
+            };
+          }
+          return item;
+        }),
+      }));
+      playPosSound('click');
+    },
+    [updateActiveSession]
+  );
 
   const updatePrice = useCallback(
     (clientId: string, newSoldPricePaise: number, reason?: string, approvedBy?: string) => {
-      setCart((prev) =>
-        prev.map((item) => {
+      updateActiveSession((sess) => ({
+        cart: sess.cart.map((item) => {
           if (item.clientId === clientId) {
             const lineListTotal = Math.round(item.list_price * item.qty);
             const lineSoldTotal = Math.round(newSoldPricePaise * item.qty);
@@ -215,24 +339,77 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             };
           }
           return item;
-        })
-      );
+        }),
+      }));
       playPosSound('click');
     },
-    []
+    [updateActiveSession]
   );
 
-  const removeItem = useCallback((clientId: string) => {
-    setCart((prev) => prev.filter((item) => item.clientId !== clientId));
-    playPosSound('click');
-  }, []);
+  const removeItem = useCallback(
+    (clientId: string) => {
+      updateActiveSession((sess) => ({
+        cart: sess.cart.filter((item) => item.clientId !== clientId),
+      }));
+      playPosSound('click');
+    },
+    [updateActiveSession]
+  );
 
   const clearCart = useCallback(() => {
-    setCart([]);
-    setBillDiscountPaise(0);
-    setSelectedCustomer(null);
+    updateActiveSession(() => ({
+      cart: [],
+      billDiscountPaise: 0,
+      selectedCustomer: null,
+      includeCarryBag: false,
+    }));
     setLastAddedClientId(null);
-  }, []);
+  }, [updateActiveSession]);
+
+  const setBillDiscount = useCallback(
+    (discountPaise: number) => {
+      updateActiveSession(() => ({ billDiscountPaise: discountPaise }));
+    },
+    [updateActiveSession]
+  );
+
+  const setSelectedCustomer = useCallback(
+    (cust: Customer | null) => {
+      updateActiveSession(() => ({ selectedCustomer: cust }));
+    },
+    [updateActiveSession]
+  );
+
+  const toggleCarryBag = useCallback(
+    (include?: boolean) => {
+      updateActiveSession((sess) => ({
+        includeCarryBag: include !== undefined ? include : !sess.includeCarryBag,
+      }));
+      playPosSound('click');
+    },
+    [updateActiveSession]
+  );
+
+  const setCarryBagChargePaise = useCallback(
+    (paise: number) => {
+      updateActiveSession(() => ({ carryBagChargePaise: Math.max(0, paise) }));
+    },
+    [updateActiveSession]
+  );
+
+  // Set final rounded/negotiated price helper
+  const setFinalPrice = useCallback(
+    async (finalPricePaise: number) => {
+      const currentCart = activeSession?.cart || [];
+      const bagCost = activeSession?.includeCarryBag ? activeSession.carryBagChargePaise : 0;
+      const rawSub = currentCart.reduce((acc, it) => acc + Math.round(it.list_price * it.qty), 0) + bagCost;
+      const discount = Math.max(0, rawSub - finalPricePaise);
+
+      updateActiveSession(() => ({ billDiscountPaise: discount }));
+      playPosSound('click');
+    },
+    [activeSession, updateActiveSession]
+  );
 
   // Proportional discount distribution and totals calculations
   const { subtotal, totalDiscount, taxTotal, roundOff, grandTotal, totalItemsCount } = useMemo(() => {
@@ -246,15 +423,15 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       itemsCount += item.qty;
     }
 
+    const bagCharge = includeCarryBag ? carryBagChargePaise : 0;
     const totalDisc = itemsLineDiscount + billDiscountPaise;
-    const discountedSubtotal = Math.max(0, rawSubtotal - totalDisc);
+    const discountedSubtotal = Math.max(0, rawSubtotal + bagCharge - totalDisc);
 
     let tax = 0;
     if (settings?.gst_enabled) {
-      // Basic aggregate tax calculation
       for (const item of cart) {
-        if (item.gstRate > 0) {
-          tax += Math.round(item.line_total * (item.gstRate / 100));
+        if (item.gst_rate > 0) {
+          tax += Math.round(item.line_total * (item.gst_rate / 100));
         }
       }
     }
@@ -270,76 +447,91 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     return {
-      subtotal: rawSubtotal,
+      subtotal: rawSubtotal + bagCharge,
       totalDiscount: totalDisc,
       taxTotal: tax,
       roundOff: round,
       grandTotal: finalGrand,
-      totalItemsCount: itemsCount,
+      totalItemsCount: itemsCount + (includeCarryBag ? 1 : 0),
     };
-  }, [cart, billDiscountPaise, settings]);
+  }, [cart, billDiscountPaise, includeCarryBag, carryBagChargePaise, settings]);
 
-  // Set final rounded/negotiated price helper (Directly allowed for all roles/workers)
-  const setFinalPrice = useCallback(
-    async (finalPricePaise: number) => {
-      const rawSub = cart.reduce((acc, it) => acc + Math.round(it.list_price * it.qty), 0);
-      const discount = Math.max(0, rawSub - finalPricePaise);
-      setBillDiscountPaise(discount);
-      playPosSound('click');
-    },
-    [cart]
-  );
-
+  // Hold Bill: switches to new cart or saves to database
   const holdBill = useCallback(async () => {
     if (cart.length === 0) return;
+
+    // If cashier wants to quickly serve next customer with multi-carts:
+    // Create new cart session directly if < 4, otherwise save to held bills API
+    if (cartSessions.length < 4) {
+      createCartSession();
+      return;
+    }
+
     try {
       await apiRequest('/bills/hold', {
         method: 'POST',
         body: JSON.stringify({
-          shiftId: currentShift?.id,
-          items: cart,
+          customerId: selectedCustomer?.id || null,
+          items: cart.map((it) => ({
+            productId: it.product_id,
+            name: it.name,
+            qty: it.qty,
+            unit: it.unit,
+            listPrice: it.list_price,
+            soldPrice: it.sold_price,
+            isCustom: it.is_custom,
+          })),
+          discountTotal: billDiscountPaise,
         }),
       });
       clearCart();
-      refreshHeldBills();
-      playPosSound('success');
+      await refreshHeldBills();
+      playPosSound('beep');
     } catch (err: any) {
-      playPosSound('error');
       alert(`Failed to hold bill: ${err.message}`);
     }
-  }, [cart, currentShift, clearCart, refreshHeldBills]);
+  }, [cart, selectedCustomer, billDiscountPaise, cartSessions.length, createCartSession, clearCart, refreshHeldBills]);
 
   const resumeBill = useCallback(
-    (held: any) => {
-      const restoredItems: CartItem[] = (held.items || []).map((bi: any) => ({
+    (heldBill: any) => {
+      const items: CartItem[] = (heldBill.items || []).map((it: any) => ({
         clientId: `resumed-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-        product_id: bi.product_id,
-        is_custom: !!bi.is_custom,
-        name: bi.name_snapshot,
-        sku: bi.sku_snapshot,
+        product_id: it.product_id,
+        is_custom: !!it.is_custom,
+        name: it.name,
+        sku: null,
         barcode: null,
-        unit: bi.unit,
-        allows_decimal_qty: bi.unit === 'kg' || bi.unit === 'g' || bi.unit === 'litre' || bi.unit === 'ml',
-        qty: bi.qty,
+        unit: it.unit || 'piece',
+        allows_decimal_qty: it.unit === 'kg' || it.unit === 'g' || it.unit === 'litre' || it.unit === 'ml',
+        qty: it.qty,
         current_stock: 100,
-        list_price: bi.list_price_snapshot,
-        sold_price: bi.sold_price,
-        line_discount: bi.line_discount,
-        gst_rate: bi.gst_rate,
-        tax_amount: bi.tax_amount,
-        line_total: bi.line_total,
+        list_price: it.list_price || it.sold_price,
+        sold_price: it.sold_price,
+        line_discount: 0,
+        gst_rate: 0,
+        tax_amount: 0,
+        line_total: Math.round(it.sold_price * it.qty),
       }));
 
-      setCart(restoredItems);
+      updateActiveSession(() => ({
+        cart: items,
+        billDiscountPaise: heldBill.discount_total || 0,
+      }));
+
       setIsHeldBillsModalOpen(false);
-      playPosSound('click');
+      playPosSound('success');
     },
-    []
+    [updateActiveSession]
   );
 
   return (
     <PosContext.Provider
       value={{
+        cartSessions,
+        activeSessionId,
+        createCartSession,
+        switchCartSession,
+        closeCartSession,
         cart,
         addItem,
         addCustomItem,
@@ -348,8 +540,12 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         removeItem,
         clearCart,
         billDiscountPaise,
-        setBillDiscount: setBillDiscountPaise,
+        setBillDiscount,
         setFinalPrice,
+        includeCarryBag,
+        carryBagChargePaise,
+        toggleCarryBag,
+        setCarryBagChargePaise,
         selectedCustomer,
         setSelectedCustomer,
         currentShift,
