@@ -46,13 +46,13 @@ export const CartTable: React.FC = () => {
 
   if (cart.length === 0) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center p-6 text-center text-slate-400 dark:text-slate-500 bg-white/40 dark:bg-slate-900/40 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800 m-2">
-        <div className="w-16 h-16 rounded-full bg-coastal-50 dark:bg-coastal-950/40 flex items-center justify-center text-coastal-600 dark:text-coastal-400 mb-3">
-          <ShoppingBag className="w-8 h-8" />
+      <div className="flex-1 flex flex-col items-center justify-center p-4 text-center text-slate-400 dark:text-slate-500 bg-white/40 dark:bg-slate-900/40 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 m-2">
+        <div className="w-11 h-11 rounded-2xl bg-coastal-50 dark:bg-coastal-950/40 flex items-center justify-center text-coastal-600 dark:text-coastal-400 mb-2">
+          <ShoppingBag className="w-5 h-5" />
         </div>
-        <h3 className="font-bold text-base text-slate-700 dark:text-slate-200">Cart is Empty</h3>
-        <p className="text-xs text-slate-400 max-w-xs mt-1">
-          Scan a barcode, search above, or tap any quick product tile to start billing.
+        <h3 className="font-bold text-sm text-slate-700 dark:text-slate-200">Cart is Empty</h3>
+        <p className="text-[11px] text-slate-400 max-w-[200px] mt-0.5">
+          Scan a barcode or tap any catalog product to start.
         </p>
       </div>
     );

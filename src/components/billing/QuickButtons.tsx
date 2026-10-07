@@ -84,9 +84,9 @@ export const QuickButtons: React.FC = () => {
 
   if (isLoading && allProducts.length === 0) {
     return (
-      <div className="p-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 animate-pulse">
+      <div className="p-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-2.5 animate-pulse">
         {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-          <div key={i} className="h-[88px] bg-slate-200 dark:bg-slate-800 rounded-2xl"></div>
+          <div key={i} className="h-[105px] bg-slate-200 dark:bg-slate-800 rounded-2xl"></div>
         ))}
       </div>
     );
@@ -95,10 +95,10 @@ export const QuickButtons: React.FC = () => {
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Category Tab Strip */}
-      <div className="flex items-center gap-1.5 p-1.5 sm:p-2 overflow-x-auto shrink-0 border-b border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50">
+      <div className="flex items-center gap-1.5 p-2 overflow-x-auto shrink-0 border-b border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 scrollbar-none">
         <button
           onClick={() => setSelectedCatId('all')}
-          className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all ${
+          className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all ${
             selectedCatId === 'all'
               ? 'bg-coastal-800 text-white shadow-sm'
               : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
@@ -116,7 +116,7 @@ export const QuickButtons: React.FC = () => {
             <button
               key={cat.id}
               onClick={() => setSelectedCatId(cat.id)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all ${
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all ${
                 isSelected
                   ? 'bg-coastal-800 text-white shadow-sm'
                   : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
@@ -129,8 +129,8 @@ export const QuickButtons: React.FC = () => {
         })}
       </div>
 
-      {/* Clean Uniform Product Tiles */}
-      <div className="flex-1 p-2 sm:p-2.5 grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-2 overflow-y-auto min-h-0">
+      {/* Spacious, Uniform Product Cards (Spacious width, fully readable headings) */}
+      <div className="flex-1 p-2.5 sm:p-3 grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 overflow-y-auto min-h-0">
         {displayedProducts.map((prod) => {
           const style = getCategoryTextColor(prod.category_name, prod.category_id);
           const isOutOfStock = prod.current_stock <= 0;
@@ -139,22 +139,36 @@ export const QuickButtons: React.FC = () => {
             <button
               key={prod.id}
               onClick={() => addItem(prod)}
-              className="group relative flex flex-col justify-between p-2.5 sm:p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-coastal-500 dark:hover:border-coastal-500 hover:shadow-md transition-all text-left h-[88px] sm:h-[92px] w-full shrink-0 active:scale-[0.98] select-none"
+              className="group relative flex flex-col justify-between p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-coastal-500 dark:hover:border-coastal-500 hover:shadow-md transition-all text-left h-[105px] sm:h-[110px] w-full shrink-0 active:scale-[0.98] select-none"
             >
+              {/* Category label with colored indicator */}
               <div>
-                <span className={`text-[10px] font-bold uppercase tracking-wider block truncate ${style.text}`}>
-                  {prod.category_name || 'Item'}
-                </span>
-                <h4 className="font-bold text-xs sm:text-sm text-slate-800 dark:text-slate-100 line-clamp-2 leading-tight mt-0.5">
+                <div className="flex items-center justify-between gap-1">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className={`w-1.5 h-1.5 rounded-full ${style.dot} shrink-0`} />
+                    <span className={`text-[10px] font-bold uppercase tracking-wider block truncate ${style.text}`}>
+                      {prod.category_name || 'Item'}
+                    </span>
+                  </div>
+                  {isOutOfStock && (
+                    <span className="text-[9px] font-bold uppercase text-rose-600 bg-rose-50 dark:bg-rose-950 px-1.5 py-0.2 rounded shrink-0">
+                      Out
+                    </span>
+                  )}
+                </div>
+
+                {/* Product Name (Full visibility, crisp 2-line clamp) */}
+                <h4 className="font-bold text-xs sm:text-[13px] text-slate-800 dark:text-slate-100 line-clamp-2 leading-snug mt-1">
                   {prod.name}
                 </h4>
               </div>
 
-              <div className="flex items-baseline justify-between mt-1 pt-1 border-t border-slate-100 dark:border-slate-800/60">
-                <span className="font-extrabold text-sm sm:text-base text-coastal-800 dark:text-coastal-300">
+              {/* Price & Unit */}
+              <div className="flex items-baseline justify-between pt-1.5 border-t border-slate-100 dark:border-slate-800/80 shrink-0">
+                <span className="font-black text-sm sm:text-base text-coastal-800 dark:text-coastal-300">
                   {formatPaise(prod.selling_price)}
                 </span>
-                <span className="text-[10px] font-medium text-slate-400 capitalize">
+                <span className="text-[11px] font-semibold text-slate-400 capitalize">
                   {prod.unit}
                 </span>
               </div>
