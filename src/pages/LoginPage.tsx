@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { apiRequest } from '../utils/api';
-import { Store, User as UserIcon, Lock, ArrowRight, ShieldCheck, Sparkles } from 'lucide-react';
+import { Store, Lock, ArrowRight, ShieldCheck } from 'lucide-react';
 
 export const LoginPage: React.FC = () => {
   const { login } = useAuth();
@@ -11,6 +11,8 @@ export const LoginPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const pinInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setIsLoading(true);
@@ -25,6 +27,28 @@ export const LoginPage: React.FC = () => {
       .finally(() => setIsLoading(false));
   }, []);
 
+  // Physical keyboard listener for hardware numpad / numbers
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if (e.key >= '0' && e.key <= '9') {
+        if (pin.length < 8) {
+          setPin((prev) => prev + e.key);
+        }
+      } else if (e.key === 'Backspace') {
+        setPin((prev) => prev.slice(0, -1));
+      } else if (e.key === 'Escape' || e.key === 'Delete') {
+        setPin('');
+      } else if (e.key === 'Enter') {
+        if (selectedUserId && pin.length > 0) {
+          handleSubmit();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, [pin, selectedUserId]);
+
   const handleKeypadPress = (val: string) => {
     if (val === 'clear') {
       setPin('');
@@ -37,8 +61,8 @@ export const LoginPage: React.FC = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!selectedUserId || !pin) return;
     setIsSubmitting(true);
     setErrorMsg(null);
@@ -53,44 +77,35 @@ export const LoginPage: React.FC = () => {
     }
   };
 
-  const selectedUser = users.find((u) => u.id === selectedUserId);
-
   return (
-    <div className="min-h-screen w-full bg-slate-900 text-white flex flex-col justify-between p-4 sm:p-6 select-none">
-      {/* Top Brand Bar */}
-      <div className="max-w-4xl w-full mx-auto flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-saffron-500 text-slate-950 font-bold flex items-center justify-center shadow-lg shadow-saffron-500/20">
-            <Store className="w-6 h-6 text-coastal-950" />
+    <div className="h-screen w-screen overflow-hidden bg-slate-900 text-white flex flex-col items-center justify-center p-3 sm:p-4 select-none">
+      {/* Main Centered Login Box */}
+      <div className="max-w-md w-full bg-slate-800/90 backdrop-blur-md rounded-3xl border border-slate-700 shadow-2xl p-5 sm:p-6 space-y-4 my-auto">
+        {/* Brand Header */}
+        <div className="flex items-center justify-between border-b border-slate-700/80 pb-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-saffron-500 text-slate-950 font-bold flex items-center justify-center shadow-md shadow-saffron-500/20 shrink-0">
+              <Store className="w-5 h-5 text-coastal-950" />
+            </div>
+            <div>
+              <h1 className="font-extrabold text-base sm:text-lg tracking-tight text-white flex items-center gap-1.5 leading-tight">
+                Mangalore Store
+                <span className="text-[9px] uppercase font-bold tracking-wider bg-coastal-800 text-coastal-200 px-1.5 py-0.2 rounded">
+                  POS
+                </span>
+              </h1>
+              <p className="text-[10px] text-coastal-300">Mathikere, Bengaluru • Offline Desktop System</p>
+            </div>
           </div>
-          <div>
-            <h1 className="font-extrabold text-lg sm:text-xl tracking-tight text-white flex items-center gap-1.5">
-              Mangalore Store
-              <span className="text-[10px] uppercase font-bold tracking-wider bg-coastal-800 text-coastal-200 px-2 py-0.5 rounded-full">
-                POS
-              </span>
-            </h1>
-            <p className="text-xs text-coastal-300">Mathikere, Bengaluru • Offline Desktop System</p>
+
+          <div className="hidden sm:flex items-center gap-1 text-[10px] text-coastal-400 font-semibold bg-coastal-950/60 px-2 py-1 rounded-lg border border-coastal-800">
+            <ShieldCheck className="w-3.5 h-3.5 text-saffron-400" />
+            <span>SQLite WAL</span>
           </div>
-        </div>
-
-        <div className="hidden sm:flex items-center gap-2 text-xs text-coastal-400 font-semibold bg-coastal-950/60 px-3 py-1.5 rounded-xl border border-coastal-800">
-          <ShieldCheck className="w-4 h-4 text-saffron-400" />
-          <span>Local SQLite WAL • Offline-First</span>
-        </div>
-      </div>
-
-      {/* Main Login Card */}
-      <div className="max-w-md w-full mx-auto bg-slate-800/90 backdrop-blur-md rounded-3xl border border-slate-700 shadow-2xl p-6 sm:p-8 space-y-6">
-        <div className="text-center">
-          <h2 className="text-xl font-extrabold text-white">Select User & Enter PIN</h2>
-          <p className="text-xs text-slate-400 mt-1">
-            Fast counter access for Owner, Worker, and Cashier
-          </p>
         </div>
 
         {errorMsg && (
-          <div className="p-3 rounded-2xl bg-rose-950/50 border border-rose-800 text-rose-300 text-xs font-semibold text-center">
+          <div className="p-2.5 rounded-xl bg-rose-950/60 border border-rose-800 text-rose-300 text-xs font-semibold text-center">
             {errorMsg}
           </div>
         )}
@@ -108,19 +123,19 @@ export const LoginPage: React.FC = () => {
                   setPin('');
                   setErrorMsg(null);
                 }}
-                className={`p-3 rounded-2xl border text-center transition-all flex flex-col items-center gap-1.5 ${
+                className={`p-2 rounded-xl border text-center transition-all flex flex-col items-center gap-1 ${
                   isSelected
-                    ? 'bg-coastal-700 text-white border-coastal-400 shadow-md ring-2 ring-coastal-400/30'
-                    : 'bg-slate-700/60 text-slate-300 border-slate-600 hover:bg-slate-700'
+                    ? 'bg-coastal-700 text-white border-coastal-400 shadow-sm ring-2 ring-coastal-400/30'
+                    : 'bg-slate-700/50 text-slate-300 border-slate-600 hover:bg-slate-700'
                 }`}
               >
-                <div className="w-8 h-8 rounded-full bg-slate-600/80 flex items-center justify-center font-bold text-xs">
+                <div className="w-7 h-7 rounded-full bg-slate-600/80 flex items-center justify-center font-bold text-xs">
                   {u.name.slice(0, 1)}
                 </div>
                 <div className="font-bold text-xs truncate max-w-full leading-tight">
                   {u.name.split(' ')[0]}
                 </div>
-                <span className="text-[10px] uppercase font-semibold text-slate-400">
+                <span className="text-[9px] uppercase font-semibold text-slate-400">
                   {u.role}
                 </span>
               </button>
@@ -129,20 +144,21 @@ export const LoginPage: React.FC = () => {
         </div>
 
         {/* PIN Display & Keypad Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3">
           <div className="relative">
             <input
+              ref={pinInputRef}
               type="password"
               readOnly
               value={pin}
-              placeholder="Enter PIN (e.g. 1234 or 0000)"
-              className="w-full h-14 text-center text-2xl tracking-widest font-black rounded-2xl bg-slate-900 border-2 border-slate-700 focus:border-coastal-500 text-white outline-none"
+              placeholder="Enter PIN (Keyboard or Numpad)"
+              className="w-full h-12 text-center text-2xl tracking-widest font-black rounded-xl bg-slate-900 border-2 border-slate-700 focus:border-coastal-500 text-white outline-none"
             />
-            <Lock className="w-5 h-5 text-slate-500 absolute left-4 top-4.5" />
+            <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-4" />
           </div>
 
-          {/* Numerical Touch Keypad (Great for touchscreens and mother) */}
-          <div className="grid grid-cols-3 gap-2">
+          {/* Numerical Touch Keypad */}
+          <div className="grid grid-cols-3 gap-1.5">
             {['1', '2', '3', '4', '5', '6', '7', '8', '9', 'C', '0', '⌫'].map((k) => (
               <button
                 key={k}
@@ -152,7 +168,7 @@ export const LoginPage: React.FC = () => {
                   else if (k === '⌫') handleKeypadPress('back');
                   else handleKeypadPress(k);
                 }}
-                className="h-12 rounded-2xl bg-slate-700/80 hover:bg-slate-600 active:scale-95 text-lg font-bold text-white shadow-xs transition-all flex items-center justify-center"
+                className="h-10 sm:h-11 rounded-xl bg-slate-700/80 hover:bg-slate-600 active:scale-95 text-base font-bold text-white shadow-xs transition-all flex items-center justify-center"
               >
                 {k}
               </button>
@@ -162,20 +178,20 @@ export const LoginPage: React.FC = () => {
           <button
             type="submit"
             disabled={isSubmitting || !pin}
-            className="w-full h-14 rounded-2xl bg-coastal-600 hover:bg-coastal-500 text-white font-extrabold text-base flex items-center justify-center gap-2 shadow-lg shadow-coastal-600/30 active:scale-[0.99] transition-all disabled:opacity-50"
+            className="w-full h-11 sm:h-12 rounded-xl bg-coastal-600 hover:bg-coastal-500 text-white font-extrabold text-sm sm:text-base flex items-center justify-center gap-2 shadow-md shadow-coastal-600/30 active:scale-[0.99] transition-all disabled:opacity-50"
           >
             {isSubmitting ? (
               <span>Signing In...</span>
             ) : (
               <>
                 <span>Open POS Terminal</span>
-                <ArrowRight className="w-5 h-5 text-saffron-400" />
+                <ArrowRight className="w-4 h-4 text-saffron-400" />
               </>
             )}
           </button>
 
           {/* Demo Credentials Helper Pill */}
-          <div className="p-2.5 rounded-xl bg-slate-900/60 border border-slate-700 text-center text-[11px] text-slate-400">
+          <div className="p-2 rounded-lg bg-slate-900/60 border border-slate-700/70 text-center text-[10px] text-slate-400">
             <span>Demo PINs: </span>
             <strong className="text-coastal-300">Admin: 1234</strong> •{' '}
             <strong className="text-coastal-300">Worker: 0000</strong> •{' '}
@@ -185,7 +201,7 @@ export const LoginPage: React.FC = () => {
       </div>
 
       {/* Footer */}
-      <div className="text-center text-xs text-slate-500">
+      <div className="text-center text-[10px] text-slate-500 py-1">
         © Mangalore Store POS • Fast Offline Point of Sale
       </div>
     </div>
