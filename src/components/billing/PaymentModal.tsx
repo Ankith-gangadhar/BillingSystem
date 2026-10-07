@@ -37,7 +37,9 @@ export const PaymentModal: React.FC = () => {
 
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('cash');
   const [tenderedRs, setTenderedRs] = useState<string>('');
+  const [upiAmountRs, setUpiAmountRs] = useState<string>('');
   const [upiRef, setUpiRef] = useState<string>('');
+  const [showBillItems, setShowBillItems] = useState<boolean>(false);
   const [notes, setNotes] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -52,7 +54,9 @@ export const PaymentModal: React.FC = () => {
     if (isPaymentModalOpen) {
       setSelectedMethod('cash');
       setTenderedRs(grandTotalRupees.toString());
+      setUpiAmountRs(grandTotalRupees.toString());
       setUpiRef('');
+      setShowBillItems(false);
       setIsSplitMode(false);
       setErrorMsg(null);
       setSplitPayments([
@@ -65,12 +69,15 @@ export const PaymentModal: React.FC = () => {
   if (!isPaymentModalOpen) return null;
 
   const tenderedPaise = parsePaise(tenderedRs || '0');
+  const upiAmountPaise = parsePaise(upiAmountRs || '0');
 
-  // If cashier types less than grand total in cash (e.g. 600 for a 625 bill),
+  // If cashier types less than grand total in cash or UPI (e.g. 600 for a 625 bill),
   // the bill is dynamically discounted to 600 and difference is applied as discount!
-  const isLesserTender = selectedMethod === 'cash' && !isSplitMode && tenderedPaise > 0 && tenderedPaise < grandTotal;
-  const effectivePayablePaise = isLesserTender ? tenderedPaise : grandTotal;
-  const autoDiscountPaise = isLesserTender ? grandTotal - tenderedPaise : 0;
+  const isLesserCash = selectedMethod === 'cash' && !isSplitMode && tenderedPaise > 0 && tenderedPaise < grandTotal;
+  const isLesserUpi = selectedMethod === 'upi' && !isSplitMode && upiAmountPaise > 0 && upiAmountPaise < grandTotal;
+  const isLesserTender = isLesserCash || isLesserUpi;
+  const effectivePayablePaise = isLesserCash ? tenderedPaise : isLesserUpi ? upiAmountPaise : grandTotal;
+  const autoDiscountPaise = isLesserTender ? grandTotal - effectivePayablePaise : 0;
   const changeDuePaise = selectedMethod === 'cash' && !isSplitMode && tenderedPaise > grandTotal ? tenderedPaise - grandTotal : 0;
 
   const handleQuickCash = (amountRs: number) => {
@@ -88,11 +95,11 @@ export const PaymentModal: React.FC = () => {
       let finalBillTotal = grandTotal;
       let totalBillDiscount = billDiscountPaise;
 
-      // If tendered cash is less than grand total (e.g. 600 tendered on a 625 bill),
+      // If tendered cash or UPI amount is less than grand total (e.g. 600 on a 625 bill),
       // automatically bill at 600 with the 25 difference as discount!
-      if (selectedMethod === 'cash' && !isSplitMode && tenderedPaise > 0 && tenderedPaise < grandTotal) {
-        totalBillDiscount += (grandTotal - tenderedPaise);
-        finalBillTotal = tenderedPaise;
+      if (isLesserTender) {
+        totalBillDiscount += (grandTotal - effectivePayablePaise);
+        finalBillTotal = effectivePayablePaise;
       }
 
       let paymentsPayload = [];
@@ -112,12 +119,20 @@ export const PaymentModal: React.FC = () => {
             changeAmount: changeDuePaise,
           },
         ];
+      } else if (selectedMethod === 'upi') {
+        paymentsPayload = [
+          {
+            method: 'upi',
+            amount: finalBillTotal,
+            reference: upiRef || null,
+          },
+        ];
       } else {
         paymentsPayload = [
           {
             method: selectedMethod,
             amount: finalBillTotal,
-            reference: upiRef || null,
+            reference: null,
           },
         ];
       }
@@ -188,14 +203,23 @@ export const PaymentModal: React.FC = () => {
 
         {/* Content */}
         <div className="p-3 sm:p-4 overflow-y-auto space-y-3 flex-1">
-          {/* Amount Due Card */}
-          <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1">
+          {/* Amount Due Card with Bill Breakdown Toggle */}
+          <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
             <div className="flex justify-between items-center">
               <div>
                 <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">
                   {isLesserTender ? 'Adjusted Bill Amount' : 'Amount Payable'}
                 </span>
-                <div className="text-xs text-slate-400">{cart.length} items in cart</div>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="text-xs text-slate-500">{cart.length} items in cart</span>
+                  <button
+                    type="button"
+                    onClick={() => setShowBillItems(!showBillItems)}
+                    className="text-[11px] text-coastal-600 dark:text-coastal-400 font-bold underline hover:text-coastal-800"
+                  >
+                    {showBillItems ? 'Hide Bill' : 'Show Bill Items'}
+                  </button>
+                </div>
               </div>
               <div className="text-right">
                 <div className="text-2xl sm:text-3xl font-black text-coastal-800 dark:text-coastal-400">
@@ -208,6 +232,22 @@ export const PaymentModal: React.FC = () => {
                 )}
               </div>
             </div>
+
+            {/* Collapsible Bill Items Preview */}
+            {showBillItems && (
+              <div className="mt-2 pt-2 border-t border-slate-200 dark:border-slate-700 text-xs space-y-1 max-h-36 overflow-y-auto">
+                {cart.map((item, idx) => (
+                  <div key={idx} className="flex justify-between text-slate-700 dark:text-slate-300">
+                    <span className="truncate pr-2">{item.name} × {item.qty}</span>
+                    <span className="font-semibold shrink-0">{formatPaise(item.sold_price * item.qty)}</span>
+                  </div>
+                ))}
+                <div className="flex justify-between font-bold pt-1 border-t border-dashed border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
+                  <span>Subtotal:</span>
+                  <span>{formatPaise(subtotal)}</span>
+                </div>
+              </div>
+            )}
           </div>
 
           {errorMsg && (
@@ -338,15 +378,56 @@ export const PaymentModal: React.FC = () => {
             </div>
           )}
 
-          {/* UPI QR & Ref Panel */}
+          {/* UPI QR & Ref Panel (Editable UPI Cost & Dynamic QR) */}
           {!isSplitMode && selectedMethod === 'upi' && (
-            <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2 bg-white dark:bg-slate-900 text-center">
-              <div className="p-2.5 bg-slate-50 dark:bg-slate-800 rounded-xl max-w-xs mx-auto flex flex-col items-center">
-                <QrCode className="w-28 h-28 text-slate-800 dark:text-white" />
-                <p className="text-xs font-bold text-slate-700 dark:text-slate-300 mt-1.5">
-                  Scan & Pay ₹{grandTotalRupees.toFixed(2)}
+            <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3 bg-white dark:bg-slate-900">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  UPI Bill Amount to Collect (₹):
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    value={upiAmountRs}
+                    onChange={(e) => setUpiAmountRs(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleCompleteSale();
+                      }
+                    }}
+                    className="flex-1 h-11 px-3 text-lg font-black rounded-xl border-2 border-slate-200 dark:border-slate-700 focus:border-coastal-600 outline-none text-slate-900 dark:text-white"
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setUpiAmountRs(grandTotalRupees.toString())}
+                    className="px-3 h-11 rounded-xl bg-slate-100 dark:bg-slate-800 font-bold text-xs hover:bg-slate-200 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shrink-0"
+                  >
+                    Reset Exact
+                  </button>
+                </div>
+              </div>
+
+              {/* Dynamic QR Code */}
+              <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl max-w-xs mx-auto flex flex-col items-center border border-slate-200 dark:border-slate-700">
+                <div className="w-32 h-32 bg-white p-1 rounded-xl shadow-xs flex items-center justify-center border border-slate-200 overflow-hidden">
+                  <img
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(
+                      `upi://pay?pa=mangalorestore@upi&pn=Mangalore Store&am=${(parsePaise(upiAmountRs || '0') / 100).toFixed(2)}&cu=INR`
+                    )}`}
+                    alt="UPI QR Code"
+                    className="w-full h-full object-contain"
+                    onError={(e) => {
+                      // Fallback to SVG icon if offline
+                      (e.currentTarget as HTMLElement).style.display = 'none';
+                    }}
+                  />
+                </div>
+                <p className="text-xs font-black text-slate-800 dark:text-slate-100 mt-2">
+                  Scan & Pay ₹{(parsePaise(upiAmountRs || '0') / 100).toFixed(2)}
                 </p>
-                <p className="text-[10px] text-slate-400">UPI: mangalorestore@upi</p>
+                <p className="text-[10px] text-slate-500 font-medium">GPay • PhonePe • Paytm • BHIM</p>
               </div>
 
               <div>

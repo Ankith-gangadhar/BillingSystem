@@ -133,9 +133,10 @@ export const BillingPage: React.FC = () => {
           {/* Multi-Cart Tab Strip */}
           <div className="px-2 py-1.5 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-1.5 shrink-0 overflow-x-auto">
             <div className="flex items-center gap-1.5 min-w-0">
-              {cartSessions.map((session) => {
+              {cartSessions.map((session, index) => {
                 const isActive = session.id === activeSessionId;
                 const itemsCount = session.cart.reduce((acc, it) => acc + it.qty, 0) + (session.includeCarryBag ? 1 : 0);
+                const cartDisplayName = `Cart ${index + 1}`;
 
                 return (
                   <div
@@ -147,7 +148,7 @@ export const BillingPage: React.FC = () => {
                         : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 border border-slate-200 dark:border-slate-700'
                     }`}
                   >
-                    <span>{session.label}</span>
+                    <span>{cartDisplayName}</span>
                     {itemsCount > 0 && (
                       <span
                         className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
@@ -162,7 +163,7 @@ export const BillingPage: React.FC = () => {
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          if (session.cart.length === 0 || confirm(`Close ${session.label}?`)) {
+                          if (session.cart.length === 0 || confirm(`Close ${cartDisplayName}?`)) {
                             closeCartSession(session.id);
                           }
                         }}

@@ -161,10 +161,14 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           ];
         }
         const filtered = prev.filter((s) => s.id !== sessionId);
+        const reindexed = filtered.map((s, idx) => ({
+          ...s,
+          label: `Cart ${idx + 1}`,
+        }));
         if (activeSessionId === sessionId) {
-          setActiveSessionId(filtered[0].id);
+          setActiveSessionId(reindexed[0].id);
         }
-        return filtered;
+        return reindexed;
       });
       playPosSound('click');
     },
