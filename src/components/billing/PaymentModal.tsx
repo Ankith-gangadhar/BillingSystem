@@ -14,9 +14,7 @@ import {
   CheckCircle2,
   Receipt,
   ArrowRight,
-  Tag,
   Sparkles,
-  Edit3,
 } from 'lucide-react';
 
 export const PaymentModal: React.FC = () => {
@@ -35,7 +33,7 @@ export const PaymentModal: React.FC = () => {
     setFinalPrice,
   } = usePos();
 
-  const { settings, user } = useAuth();
+  const { user } = useAuth();
 
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('cash');
   const [tenderedRs, setTenderedRs] = useState<string>('');
@@ -43,10 +41,6 @@ export const PaymentModal: React.FC = () => {
   const [notes, setNotes] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-
-  // Inline final bill amount override state
-  const [isEditingTotal, setIsEditingTotal] = useState<boolean>(false);
-  const [customTotalInput, setCustomTotalInput] = useState<string>('');
 
   // Split Payment state
   const [isSplitMode, setIsSplitMode] = useState<boolean>(false);
@@ -61,8 +55,6 @@ export const PaymentModal: React.FC = () => {
       setUpiRef('');
       setIsSplitMode(false);
       setErrorMsg(null);
-      setIsEditingTotal(false);
-      setCustomTotalInput(grandTotalRupees.toString());
       setSplitPayments([
         { method: 'cash', amount: Math.floor(grandTotal / 2) },
         { method: 'upi', amount: grandTotal - Math.floor(grandTotal / 2) },
@@ -73,32 +65,17 @@ export const PaymentModal: React.FC = () => {
   if (!isPaymentModalOpen) return null;
 
   const tenderedPaise = parsePaise(tenderedRs || '0');
-  const changeDuePaise = Math.max(0, tenderedPaise - grandTotal);
-  const isTenderShort = selectedMethod === 'cash' && !isSplitMode && tenderedPaise > 0 && tenderedPaise < grandTotal;
-  const shortDiffPaise = isTenderShort ? grandTotal - tenderedPaise : 0;
+
+  // If cashier types less than grand total in cash (e.g. 600 for a 625 bill),
+  // the bill is dynamically discounted to 600 and difference is applied as discount!
+  const isLesserTender = selectedMethod === 'cash' && !isSplitMode && tenderedPaise > 0 && tenderedPaise < grandTotal;
+  const effectivePayablePaise = isLesserTender ? tenderedPaise : grandTotal;
+  const autoDiscountPaise = isLesserTender ? grandTotal - tenderedPaise : 0;
+  const changeDuePaise = selectedMethod === 'cash' && !isSplitMode && tenderedPaise > grandTotal ? tenderedPaise - grandTotal : 0;
 
   const handleQuickCash = (amountRs: number) => {
     setTenderedRs(amountRs.toString());
     setSelectedMethod('cash');
-    playPosSound('click');
-  };
-
-  const handleApplyCustomTotal = async () => {
-    const val = parseFloat(customTotalInput);
-    if (isNaN(val) || val < 0) {
-      alert('Please enter a valid amount');
-      return;
-    }
-    const targetPaise = Math.round(val * 100);
-    await setFinalPrice(targetPaise);
-    setTenderedRs(val.toString());
-    setIsEditingTotal(false);
-  };
-
-  const handleApplyShortDiscount = async () => {
-    if (tenderedPaise <= 0) return;
-    await setFinalPrice(tenderedPaise);
-    setTenderedRs((tenderedPaise / 100).toString());
     playPosSound('click');
   };
 
@@ -108,47 +85,38 @@ export const PaymentModal: React.FC = () => {
     setErrorMsg(null);
 
     try {
-      let currentGrandTotal = grandTotal;
-      let currentBillDiscount = billDiscountPaise;
+      let finalBillTotal = grandTotal;
+      let totalBillDiscount = billDiscountPaise;
 
-      // If tendered cash is less than grand total (e.g. 1700 tendered on a 1727 bill)
-      if (selectedMethod === 'cash' && !isSplitMode && tenderedPaise < currentGrandTotal) {
-        const diffRs = ((currentGrandTotal - tenderedPaise) / 100).toFixed(2);
-        const confirmDiscount = window.confirm(
-          `Customer gave ₹${(tenderedPaise / 100).toFixed(2)} (₹${diffRs} less than ₹${(currentGrandTotal / 100).toFixed(2)}).\n\nApply ₹${diffRs} discount and settle the bill at ₹${(tenderedPaise / 100).toFixed(2)}?`
-        );
-        if (!confirmDiscount) {
-          setIsSubmitting(false);
-          return;
-        }
-
-        await setFinalPrice(tenderedPaise);
-        currentGrandTotal = tenderedPaise;
+      // If tendered cash is less than grand total (e.g. 600 tendered on a 625 bill),
+      // automatically bill at 600 with the 25 difference as discount!
+      if (selectedMethod === 'cash' && !isSplitMode && tenderedPaise > 0 && tenderedPaise < grandTotal) {
+        totalBillDiscount += (grandTotal - tenderedPaise);
+        finalBillTotal = tenderedPaise;
       }
 
       let paymentsPayload = [];
 
       if (isSplitMode) {
         const totalSplit = splitPayments.reduce((acc, p) => acc + p.amount, 0);
-        if (totalSplit !== currentGrandTotal) {
-          throw new Error(`Split payments sum (₹${(totalSplit / 100).toFixed(2)}) must equal Grand Total (₹${(currentGrandTotal / 100).toFixed(2)})`);
+        if (totalSplit !== finalBillTotal) {
+          throw new Error(`Split payments sum (₹${(totalSplit / 100).toFixed(2)}) must equal Final Total (₹${(finalBillTotal / 100).toFixed(2)})`);
         }
         paymentsPayload = splitPayments;
       } else if (selectedMethod === 'cash') {
-        const currentChange = Math.max(0, tenderedPaise - currentGrandTotal);
         paymentsPayload = [
           {
             method: 'cash',
-            amount: currentGrandTotal,
-            tenderedAmount: tenderedPaise,
-            changeAmount: currentChange,
+            amount: finalBillTotal,
+            tenderedAmount: tenderedPaise > 0 ? tenderedPaise : finalBillTotal,
+            changeAmount: changeDuePaise,
           },
         ];
       } else {
         paymentsPayload = [
           {
             method: selectedMethod,
-            amount: currentGrandTotal,
+            amount: finalBillTotal,
             reference: upiRef || null,
           },
         ];
@@ -172,7 +140,7 @@ export const PaymentModal: React.FC = () => {
           overrideApprovedBy: item.override_approved_by || null,
         })),
         payments: paymentsPayload,
-        billDiscountTotal: currentBillDiscount,
+        billDiscountTotal: totalBillDiscount,
         notes: notes || null,
       };
 
@@ -201,11 +169,6 @@ export const PaymentModal: React.FC = () => {
     }
   };
 
-  // Quick round off targets
-  const round10 = Math.floor(grandTotalRupees / 10) * 10;
-  const round50 = Math.floor(grandTotalRupees / 50) * 50;
-  const round100 = Math.floor(grandTotalRupees / 100) * 100;
-
   return (
     <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-2 sm:p-3 z-50 animate-in fade-in-50 duration-150 select-none">
       <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
@@ -225,99 +188,25 @@ export const PaymentModal: React.FC = () => {
 
         {/* Content */}
         <div className="p-3 sm:p-4 overflow-y-auto space-y-3 flex-1">
-          {/* Amount Due Card with Quick Alter / Discount */}
-          <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
+          {/* Amount Due Card */}
+          <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1">
             <div className="flex justify-between items-center">
               <div>
-                <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Final Amount Payable</span>
+                <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">
+                  {isLesserTender ? 'Adjusted Bill Amount' : 'Amount Payable'}
+                </span>
                 <div className="text-xs text-slate-400">{cart.length} items in cart</div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="text-right">
                 <div className="text-2xl sm:text-3xl font-black text-coastal-800 dark:text-coastal-400">
-                  {formatPaise(grandTotal)}
+                  {formatPaise(effectivePayablePaise)}
                 </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsEditingTotal(!isEditingTotal);
-                    setCustomTotalInput(grandTotalRupees.toString());
-                  }}
-                  className="p-1.5 rounded-lg bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 text-slate-700 dark:text-slate-200 text-xs flex items-center gap-1"
-                  title="Alter final bill total"
-                >
-                  <Edit3 className="w-3.5 h-3.5 text-coastal-600 dark:text-coastal-400" />
-                </button>
+                {isLesserTender && (
+                  <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                    ₹{(autoDiscountPaise / 100).toFixed(2)} discount applied
+                  </span>
+                )}
               </div>
-            </div>
-
-            {/* Inline Bill Amount Alteration Form */}
-            {isEditingTotal && (
-              <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 space-y-2 animate-in fade-in-50">
-                <div className="flex items-center justify-between text-xs font-bold text-amber-900 dark:text-amber-200">
-                  <span>Alter Total Payable (Apply Discount):</span>
-                  <button onClick={() => setIsEditingTotal(false)} className="text-slate-400 hover:text-slate-600">✕</button>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="relative flex-1">
-                    <span className="absolute left-3 top-2.5 font-bold text-sm text-slate-500">₹</span>
-                    <input
-                      type="number"
-                      value={customTotalInput}
-                      onChange={(e) => setCustomTotalInput(e.target.value)}
-                      placeholder="e.g. 1700"
-                      className="w-full h-9 pl-7 pr-3 font-bold rounded-lg border border-amber-300 dark:border-amber-700 bg-white dark:bg-slate-900 text-sm outline-none"
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleApplyCustomTotal}
-                    className="px-3 h-9 bg-coastal-800 hover:bg-coastal-700 text-white font-bold text-xs rounded-lg shadow-xs"
-                  >
-                    Apply New Total
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Quick Round Down Options (e.g. 1727 -> 1720, 1700) */}
-            <div className="flex items-center gap-1.5 flex-wrap pt-1 border-t border-slate-200/60 dark:border-slate-700/60">
-              <span className="text-[10px] font-bold text-slate-400">Quick Settle:</span>
-              {round10 > 0 && round10 < grandTotalRupees && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setFinalPrice(round10 * 100);
-                    setTenderedRs(round10.toString());
-                  }}
-                  className="px-2 py-0.5 rounded-md bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 text-[10px] font-bold hover:bg-slate-100"
-                >
-                  ₹{round10} (-₹{(grandTotalRupees - round10).toFixed(0)})
-                </button>
-              )}
-              {round50 > 0 && round50 < grandTotalRupees && round50 !== round10 && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setFinalPrice(round50 * 100);
-                    setTenderedRs(round50.toString());
-                  }}
-                  className="px-2 py-0.5 rounded-md bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 text-[10px] font-bold hover:bg-slate-100"
-                >
-                  ₹{round50} (-₹{(grandTotalRupees - round50).toFixed(0)})
-                </button>
-              )}
-              {round100 > 0 && round100 < grandTotalRupees && round100 !== round50 && round100 !== round10 && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setFinalPrice(round100 * 100);
-                    setTenderedRs(round100.toString());
-                  }}
-                  className="px-2 py-0.5 rounded-md bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 text-[10px] font-bold hover:bg-slate-100"
-                >
-                  ₹{round100} (-₹{(grandTotalRupees - round100).toFixed(0)})
-                </button>
-              )}
             </div>
           </div>
 
@@ -396,36 +285,26 @@ export const PaymentModal: React.FC = () => {
             <div className="space-y-2.5 bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
               <div>
                 <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                  Cash Received from Customer (₹):
+                  Cash Received / Billed Amount (₹):
                 </label>
                 <input
                   type="number"
                   value={tenderedRs}
                   onChange={(e) => setTenderedRs(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleCompleteSale();
+                    }
+                  }}
                   className="w-full h-11 px-3 text-lg font-black rounded-xl border-2 border-slate-200 dark:border-slate-700 focus:border-coastal-600 outline-none text-slate-900 dark:text-white"
                   autoFocus
                 />
               </div>
 
-              {/* On-the-Spot Discount Helper Chip when customer gave lesser amount */}
-              {isTenderShort && (
-                <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 flex items-center justify-between gap-2">
-                  <div className="text-xs text-amber-900 dark:text-amber-200 font-semibold">
-                    Customer gave ₹{tenderedRs} (₹{(shortDiffPaise / 100).toFixed(2)} short).
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleApplyShortDiscount}
-                    className="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-extrabold shadow-xs transition-all shrink-0"
-                  >
-                    ✨ Settle at ₹{tenderedRs} (-₹{(shortDiffPaise / 100).toFixed(0)})
-                  </button>
-                </div>
-              )}
-
               {/* Quick Denominations */}
               <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-[10px] font-semibold text-slate-400">Exact / Notes:</span>
+                <span className="text-[10px] font-semibold text-slate-400">Quick:</span>
                 <button
                   type="button"
                   onClick={() => handleQuickCash(grandTotalRupees)}
@@ -434,7 +313,6 @@ export const PaymentModal: React.FC = () => {
                   Exact ({formatPaise(grandTotal)})
                 </button>
                 {[100, 200, 500, 1000, 2000].map((amt) => {
-                  if (amt < grandTotalRupees && amt !== 500) return null;
                   return (
                     <button
                       key={amt}

@@ -61,17 +61,6 @@ export const DiscountModal: React.FC = () => {
     if (discountPaiseToApply < 0) discountPaiseToApply = 0;
     if (discountPaiseToApply > subtotal) discountPaiseToApply = subtotal;
 
-    const discountPct = subtotal > 0 ? (discountPaiseToApply / subtotal) * 100 : 0;
-    const maxLimitPct = settings?.max_cashier_discount_percent || 5;
-
-    // Check cashier permission limit
-    if (user?.role !== 'admin' && !isOwnerAtCounter && discountPct > maxLimitPct) {
-      const approved = await requestAdminApproval(
-        `Discount of ₹${(discountPaiseToApply / 100).toFixed(2)} (${discountPct.toFixed(1)}% on bill total ₹${subtotalRs.toFixed(2)}) - Reason: ${reason}`
-      );
-      if (!approved) return;
-    }
-
     setBillDiscount(discountPaiseToApply);
     setIsDiscountModalOpen(false);
     playPosSound('click');

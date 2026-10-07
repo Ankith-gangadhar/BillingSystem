@@ -279,27 +279,15 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
   }, [cart, billDiscountPaise, settings]);
 
-  // Set final rounded/negotiated price helper
+  // Set final rounded/negotiated price helper (Directly allowed for all roles/workers)
   const setFinalPrice = useCallback(
     async (finalPricePaise: number) => {
       const rawSub = cart.reduce((acc, it) => acc + Math.round(it.list_price * it.qty), 0);
       const discount = Math.max(0, rawSub - finalPricePaise);
-
-      // Check cashier discount threshold
-      const maxDiscountPct = settings?.max_cashier_discount_percent || 5;
-      const discountPct = rawSub > 0 ? (discount / rawSub) * 100 : 0;
-
-      if (user?.role !== 'admin' && !isOwnerAtCounter && discountPct > maxDiscountPct) {
-        const approved = await requestAdminApproval(
-          `Cashier discount of ₹${(discount / 100).toFixed(2)} (${discountPct.toFixed(1)}% exceeds limit of ${maxDiscountPct}%)`
-        );
-        if (!approved) return;
-      }
-
       setBillDiscountPaise(discount);
       playPosSound('click');
     },
-    [cart, settings, user, isOwnerAtCounter, requestAdminApproval]
+    [cart]
   );
 
   const holdBill = useCallback(async () => {
