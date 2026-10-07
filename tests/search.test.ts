@@ -45,6 +45,9 @@ describe('MiniSearch In-Memory Search Engine (<50ms performance)', () => {
     const indexDuration = performance.now() - indexStart;
     console.log(`[Test] Indexed 5,001 items in ${indexDuration.toFixed(2)}ms`);
 
+    // Warmup query to ensure V8 JIT compilation
+    searchEngine.search('warmup', 5);
+
     // Measure query performance
     const queryStart = performance.now();
     const results = searchEngine.search('kori rotti', 10);

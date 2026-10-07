@@ -82,17 +82,21 @@ export const ReceiptModal: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {(lastCompletedBill.items || []).map((it: any, idx: number) => (
-                    <tr key={idx} className="py-1">
-                      <td className="py-1 pr-1 font-sans font-semibold text-xs leading-tight">
-                        {it.name_snapshot || it.name}
-                        {it.is_custom ? ' (Custom)' : ''}
-                      </td>
-                      <td className="py-1 text-center">{it.qty}</td>
-                      <td className="py-1 text-right">{formatPaise(it.sold_price || it.soldPrice, false)}</td>
-                      <td className="py-1 text-right font-bold">{formatPaise(it.line_total || it.lineTotal, false)}</td>
-                    </tr>
-                  ))}
+                  {(lastCompletedBill.items || []).map((it: any, idx: number) => {
+                    const originalRate = it.list_price_snapshot ?? it.listPrice ?? it.sold_price ?? it.soldPrice ?? 0;
+                    const lineAmt = Math.round(originalRate * it.qty);
+                    return (
+                      <tr key={idx} className="py-1">
+                        <td className="py-1 pr-1 font-sans font-semibold text-xs leading-tight">
+                          {it.name_snapshot || it.name}
+                          {it.is_custom ? ' (Custom)' : ''}
+                        </td>
+                        <td className="py-1 text-center">{it.qty}</td>
+                        <td className="py-1 text-right">{formatPaise(originalRate, false)}</td>
+                        <td className="py-1 text-right font-bold">{formatPaise(lineAmt, false)}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

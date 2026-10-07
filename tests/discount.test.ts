@@ -37,14 +37,12 @@ describe('Discount & Price Override Distribution', () => {
     expect(bill.discount_total).toBe(500);
     expect(bill.grand_total).toBe(8000);
 
-    // Items line discounts should sum up to exactly 500 paise
+    // Items retain their original list rates
     const items = db.prepare('SELECT * FROM bill_items WHERE bill_id = ?').all(bill.id) as any[];
-    const totalLineDiscounts = items.reduce((acc, it) => acc + it.line_discount, 0);
-    expect(totalLineDiscounts).toBe(500);
-
-    // Total line totals should equal grand total
-    const totalLineTotals = items.reduce((acc, it) => acc + it.line_total, 0);
-    expect(totalLineTotals).toBe(8000);
+    expect(items[0].list_price_snapshot).toBe(5000);
+    expect(items[0].sold_price).toBe(5000);
+    expect(items[1].list_price_snapshot).toBe(3500);
+    expect(items[1].sold_price).toBe(3500);
 
     db.close();
   });

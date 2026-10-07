@@ -147,41 +147,31 @@ export function createSaleTransaction(db: Database, input: CreateSaleInput): Bil
       });
     }
 
-    // Distribute bill-level discount proportionally across items if provided
+    // Keep individual item rates clean and track bill-level discount separately
     let totalDiscount = itemsLineDiscountTotal + billDiscount;
-    if (billDiscount > 0 && rawSubtotal > 0) {
-      let allocatedBillDiscount = 0;
-      for (let i = 0; i < preparedItems.length; i++) {
-        const pItem = preparedItems[i];
-        const lineFraction = (pItem.listPrice * pItem.qty) / rawSubtotal;
-        const extraLineDisc = (i === preparedItems.length - 1)
-          ? (billDiscount - allocatedBillDiscount)
-          : Math.round(billDiscount * lineFraction);
-
-        allocatedBillDiscount += extraLineDisc;
-        pItem.lineDiscount += extraLineDisc;
-        pItem.lineTotal = Math.max(0, Math.round(pItem.listPrice * pItem.qty) - pItem.lineDiscount);
-        pItem.soldPrice = pItem.qty > 0 ? Math.round(pItem.lineTotal / pItem.qty) : pItem.listPrice;
-      }
-    }
 
     // Compute GST and Grand Total
     let grandTotalBeforeRound = 0;
     for (const pItem of preparedItems) {
+      // Proportional net for tax calculation
+      const lineFraction = rawSubtotal > 0 ? (pItem.listPrice * pItem.qty) / rawSubtotal : 0;
+      const effectiveLineDisc = pItem.lineDiscount + (billDiscount > 0 ? Math.round(billDiscount * lineFraction) : 0);
+      const lineNet = Math.max(0, Math.round(pItem.listPrice * pItem.qty) - effectiveLineDisc);
+
       if (settings.gst_enabled && pItem.gstRate > 0) {
         if (settings.prices_include_gst) {
           // Backward calculation: Tax = Total - (Total / (1 + Rate/100))
-          const basePrice = pItem.lineTotal / (1 + pItem.gstRate / 100);
-          pItem.taxAmount = Math.round(pItem.lineTotal - basePrice);
+          const basePrice = lineNet / (1 + pItem.gstRate / 100);
+          pItem.taxAmount = Math.round(lineNet - basePrice);
         } else {
           // Forward calculation: Tax = Total * (Rate/100)
-          pItem.taxAmount = Math.round(pItem.lineTotal * (pItem.gstRate / 100));
-          pItem.lineTotal += pItem.taxAmount;
+          pItem.taxAmount = Math.round(lineNet * (pItem.gstRate / 100));
         }
       }
       taxTotal += pItem.taxAmount;
-      grandTotalBeforeRound += pItem.lineTotal;
     }
+
+    grandTotalBeforeRound = Math.max(0, rawSubtotal - totalDiscount) + (settings.prices_include_gst ? 0 : taxTotal);
 
     // Round-off to nearest ₹1 (100 paise) if enabled
     let roundOff = 0;
