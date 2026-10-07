@@ -225,7 +225,7 @@ export function verifyAdminPin(
 
 // Strip Confidential Financial Fields for Cashiers
 export function sanitizeProductForCashier<T extends Record<string, any>>(product: T): T {
-  const copy = { ...product };
+  const copy: any = { ...product };
   delete copy.purchase_price;
   delete copy.margin_percent;
   delete copy.stock_valuation;
@@ -240,5 +240,5 @@ export function sanitizeProductForCashier<T extends Record<string, any>>(product
       copy.stock_status = 'in_stock';
     }
   }
-  return copy;
+  return copy as T;
 }

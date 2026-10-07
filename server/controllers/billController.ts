@@ -128,7 +128,8 @@ export class BillController {
   }
 
   static async getById(req: AuthenticatedRequest, res: Response): Promise<void> {
-    const bill = billRepo.findById(req.params.id) as any;
+    const id = req.params.id as string;
+    const bill = billRepo.findById(id) as any;
     if (!bill) {
       res.status(404).json({ error: 'Bill not found.' });
       return;
@@ -157,7 +158,7 @@ export class BillController {
 
     try {
       const result = voidBill(db, {
-        billId: req.params.id,
+        billId: req.params.id as string,
         adminUserId: req.user!.userId,
         reason,
       });

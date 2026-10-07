@@ -214,7 +214,7 @@ export class ProductController {
 
   static async update(req: AuthenticatedRequest, res: Response): Promise<void> {
     const db = getDb();
-    const productId = req.params.id;
+    const productId = req.params.id as string;
     const existing = productRepo.findById(productId);
 
     if (!existing) {
@@ -303,7 +303,7 @@ export class ProductController {
 
   static async delete(req: AuthenticatedRequest, res: Response): Promise<void> {
     const db = getDb();
-    const productId = req.params.id;
+    const productId = req.params.id as string;
 
     productRepo.softDelete(productId);
     searchEngine.removeProduct(productId);
