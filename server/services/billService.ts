@@ -1,0 +1,503 @@
+import { Database } from 'better-sqlite3';
+import crypto from 'crypto';
+import { Bill, BillItem, Payment, PaymentMethod, UnitType } from '../../shared/types';
+import { getSettings, logAudit } from '../db/database';
+import { createStockMovement } from './stockService';
+
+export interface CreateSaleInput {
+  shiftId: string;
+  cashierId: string;
+  customerId?: string | null;
+  items: Array<{
+    productId?: string | null;
+    isCustom?: boolean;
+    name: string;
+    sku?: string | null;
+    qty: number;
+    unit?: UnitType;
+    listPrice: number; // Paise
+    soldPrice: number; // Paise
+    lineDiscount?: number; // Paise
+    gstRate?: number;
+    purchasePrice?: number | null; // Paise
+    priceOverrideReason?: string | null;
+    overrideApprovedBy?: string | null;
+  }>;
+  payments: Array<{
+    method: PaymentMethod;
+    amount: number; // Paise
+    reference?: string | null;
+    tenderedAmount?: number; // Paise
+    changeAmount?: number; // Paise
+  }>;
+  billDiscountTotal?: number; // Extra bill-level discount in Paise
+  notes?: string | null;
+  approvedBy?: string | null;
+  allowNegativeStockOverride?: boolean;
+  heldBillIdToResume?: string | null;
+}
+
+export function generateDailyBillNumber(db: Database, prefix: string = 'MS'): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const dateKey = `${year}${month}${day}`;
+
+  const row = db.prepare(`
+    INSERT INTO daily_bill_counters (date_key, last_seq)
+    VALUES (?, 1)
+    ON CONFLICT(date_key) DO UPDATE SET last_seq = last_seq + 1
+    RETURNING last_seq
+  `).get(dateKey) as { last_seq: number };
+
+  const seqStr = String(row.last_seq).padStart(4, '0');
+  return `${prefix}-${dateKey}-${seqStr}`;
+}
+
+export function createSaleTransaction(db: Database, input: CreateSaleInput): Bill {
+  if (!input.items || input.items.length === 0) {
+    throw new Error('Cart cannot be empty to complete a sale.');
+  }
+
+  const settings = getSettings(db);
+  const billId = input.heldBillIdToResume || crypto.randomUUID();
+  const billNumber = generateDailyBillNumber(db, settings.bill_prefix || 'MS');
+  const now = new Date().toISOString();
+
+  let completedBill: Bill | null = null;
+
+  const runTx = db.transaction(() => {
+    // 1. Calculate items and distribute bill-level discount if any
+    let rawSubtotal = 0;
+    let itemsLineDiscountTotal = 0;
+    let preTaxTotal = 0;
+    let taxTotal = 0;
+
+    // Check stock for all non-custom items first
+    for (const item of input.items) {
+      if (!item.isCustom && item.productId) {
+        const prod = db.prepare('SELECT id, name, current_stock FROM products WHERE id = ?').get(item.productId) as any;
+        if (!prod) {
+          throw new Error(`Product not found: ${item.name}`);
+        }
+        if (!settings.allow_negative_stock && !input.allowNegativeStockOverride) {
+          if (prod.current_stock < item.qty) {
+            throw new Error(`Insufficient stock for "${prod.name}". Available: ${prod.current_stock}, Requested: ${item.qty}`);
+          }
+        }
+      }
+    }
+
+    // Pre-calculate line amounts
+    interface PreparedItem {
+      id: string;
+      productId: string | null;
+      isCustom: number;
+      name: string;
+      sku: string | null;
+      qty: number;
+      unit: UnitType;
+      listPrice: number;
+      soldPrice: number;
+      lineDiscount: number;
+      gstRate: number;
+      taxAmount: number;
+      lineTotal: number;
+      purchasePrice: number | null;
+      priceOverrideReason: string | null;
+      overrideApprovedBy: string | null;
+    }
+
+    const preparedItems: PreparedItem[] = [];
+    const billDiscount = input.billDiscountTotal || 0;
+
+    for (const item of input.items) {
+      const listPrice = item.listPrice;
+      let soldPrice = item.soldPrice !== undefined ? item.soldPrice : listPrice;
+      const qty = item.qty;
+      const unit = item.unit || 'piece';
+      const gstRate = settings.gst_enabled ? (item.gstRate || 0) : 0;
+      
+      const lineListTotal = Math.round(listPrice * qty);
+      let lineSoldTotal = Math.round(soldPrice * qty);
+      let lineDiscount = lineListTotal - lineSoldTotal;
+      if (lineDiscount < 0) lineDiscount = 0;
+
+      rawSubtotal += lineListTotal;
+      itemsLineDiscountTotal += lineDiscount;
+
+      preparedItems.push({
+        id: crypto.randomUUID(),
+        productId: item.productId || null,
+        isCustom: item.isCustom ? 1 : 0,
+        name: item.name,
+        sku: item.sku || null,
+        qty,
+        unit,
+        listPrice,
+        soldPrice,
+        lineDiscount,
+        gstRate,
+        taxAmount: 0, // calculated below
+        lineTotal: lineSoldTotal,
+        purchasePrice: item.purchasePrice || null,
+        priceOverrideReason: item.priceOverrideReason || null,
+        overrideApprovedBy: item.overrideApprovedBy || null,
+      });
+    }
+
+    // Distribute bill-level discount proportionally across items if provided
+    let totalDiscount = itemsLineDiscountTotal + billDiscount;
+    if (billDiscount > 0 && rawSubtotal > 0) {
+      let allocatedBillDiscount = 0;
+      for (let i = 0; i < preparedItems.length; i++) {
+        const pItem = preparedItems[i];
+        const lineFraction = (pItem.listPrice * pItem.qty) / rawSubtotal;
+        const extraLineDisc = (i === preparedItems.length - 1)
+          ? (billDiscount - allocatedBillDiscount)
+          : Math.round(billDiscount * lineFraction);
+
+        allocatedBillDiscount += extraLineDisc;
+        pItem.lineDiscount += extraLineDisc;
+        pItem.lineTotal = Math.max(0, Math.round(pItem.listPrice * pItem.qty) - pItem.lineDiscount);
+        pItem.soldPrice = pItem.qty > 0 ? Math.round(pItem.lineTotal / pItem.qty) : pItem.listPrice;
+      }
+    }
+
+    // Compute GST and Grand Total
+    let grandTotalBeforeRound = 0;
+    for (const pItem of preparedItems) {
+      if (settings.gst_enabled && pItem.gstRate > 0) {
+        if (settings.prices_include_gst) {
+          // Backward calculation: Tax = Total - (Total / (1 + Rate/100))
+          const basePrice = pItem.lineTotal / (1 + pItem.gstRate / 100);
+          pItem.taxAmount = Math.round(pItem.lineTotal - basePrice);
+        } else {
+          // Forward calculation: Tax = Total * (Rate/100)
+          pItem.taxAmount = Math.round(pItem.lineTotal * (pItem.gstRate / 100));
+          pItem.lineTotal += pItem.taxAmount;
+        }
+      }
+      taxTotal += pItem.taxAmount;
+      grandTotalBeforeRound += pItem.lineTotal;
+    }
+
+    // Round-off to nearest ₹1 (100 paise) if enabled
+    let roundOff = 0;
+    let finalGrandTotal = grandTotalBeforeRound;
+    if (settings.round_off_enabled) {
+      const roundedRupees = Math.round(grandTotalBeforeRound / 100);
+      finalGrandTotal = roundedRupees * 100;
+      roundOff = finalGrandTotal - grandTotalBeforeRound;
+    }
+
+    // 2. Insert Bill Record
+    const insertBill = db.prepare(`
+      INSERT INTO bills (
+        id, bill_number, status, shift_id, cashier_id, customer_id,
+        subtotal, discount_total, tax_total, round_off, grand_total,
+        payment_status, notes, created_at, completed_at, approved_by
+      ) VALUES (?, ?, 'completed', ?, ?, ?, ?, ?, ?, ?, ?, 'paid', ?, ?, ?, ?)
+      ON CONFLICT(id) DO UPDATE SET
+        bill_number = excluded.bill_number,
+        status = 'completed',
+        subtotal = excluded.subtotal,
+        discount_total = excluded.discount_total,
+        tax_total = excluded.tax_total,
+        round_off = excluded.round_off,
+        grand_total = excluded.grand_total,
+        payment_status = 'paid',
+        notes = excluded.notes,
+        completed_at = excluded.completed_at,
+        approved_by = excluded.approved_by
+    `);
+
+    insertBill.run(
+      billId,
+      billNumber,
+      input.shiftId,
+      input.cashierId,
+      input.customerId || null,
+      rawSubtotal,
+      totalDiscount,
+      taxTotal,
+      roundOff,
+      finalGrandTotal,
+      input.notes || null,
+      now,
+      now,
+      input.approvedBy || null
+    );
+
+    // 3. Insert Line Items & Deduct Stock Movements
+    const insertItem = db.prepare(`
+      INSERT INTO bill_items (
+        id, bill_id, product_id, is_custom, name_snapshot, sku_snapshot,
+        qty, unit, list_price_snapshot, sold_price, line_discount, gst_rate,
+        tax_amount, line_total, purchase_price_snapshot, price_override_reason, override_approved_by
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    for (const pItem of preparedItems) {
+      insertItem.run(
+        pItem.id,
+        billId,
+        pItem.productId,
+        pItem.isCustom,
+        pItem.name,
+        pItem.sku,
+        pItem.qty,
+        pItem.unit,
+        pItem.listPrice,
+        pItem.soldPrice,
+        pItem.lineDiscount,
+        pItem.gstRate,
+        pItem.taxAmount,
+        pItem.lineTotal,
+        pItem.purchasePrice,
+        pItem.priceOverrideReason,
+        pItem.overrideApprovedBy
+      );
+
+      // Create stock movement for standard inventory products
+      if (!pItem.isCustom && pItem.productId) {
+        createStockMovement(db, {
+          productId: pItem.productId,
+          movementType: 'sale',
+          qtyChange: -pItem.qty,
+          reason: `Sale ${billNumber}`,
+          referenceType: 'bill',
+          referenceId: billId,
+          userId: input.cashierId,
+          approvedBy: input.approvedBy,
+        });
+      } else if (pItem.isCustom) {
+        // Log custom unlisted item added
+        logAudit(db, {
+          userId: input.cashierId,
+          actingRole: 'cashier',
+          action: 'CUSTOM_ITEM_SOLD',
+          entityType: 'bill_items',
+          entityId: pItem.id,
+          newValue: { name: pItem.name, qty: pItem.qty, price: pItem.soldPrice, billNumber },
+          reason: 'Custom unlisted item billed',
+          severity: 'notice',
+        });
+      }
+    }
+
+    // 4. Insert Payments
+    const insertPayment = db.prepare(`
+      INSERT INTO payments (
+        id, bill_id, method, amount, reference, tendered_amount, change_amount, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    for (const p of input.payments) {
+      insertPayment.run(
+        crypto.randomUUID(),
+        billId,
+        p.method,
+        p.amount,
+        p.reference || null,
+        p.tenderedAmount || null,
+        p.changeAmount || null,
+        now
+      );
+    }
+
+    // 5. Log Audit Record
+    logAudit(db, {
+      userId: input.cashierId,
+      actingRole: 'cashier',
+      action: 'SALE_COMPLETED',
+      entityType: 'bills',
+      entityId: billId,
+      newValue: {
+        billNumber,
+        grandTotal: finalGrandTotal,
+        itemsCount: preparedItems.length,
+        discountTotal: totalDiscount,
+      },
+      approvedBy: input.approvedBy,
+      severity: totalDiscount > 0 ? 'notice' : 'info',
+    });
+
+    completedBill = {
+      id: billId,
+      bill_number: billNumber,
+      status: 'completed',
+      shift_id: input.shiftId,
+      cashier_id: input.cashierId,
+      customer_id: input.customerId || null,
+      subtotal: rawSubtotal,
+      discount_total: totalDiscount,
+      tax_total: taxTotal,
+      round_off: roundOff,
+      grand_total: finalGrandTotal,
+      payment_status: 'paid',
+      notes: input.notes || null,
+      created_at: now,
+      completed_at: now,
+      voided_at: null,
+      voided_by: null,
+      void_reason: null,
+      approved_by: input.approvedBy || null,
+      items: preparedItems as any[],
+      payments: input.payments as any[],
+    };
+  });
+
+  runTx();
+  return completedBill!;
+}
+
+// Hold a Bill (Park sale)
+export function holdBill(
+  db: Database,
+  data: {
+    shiftId: string;
+    cashierId: string;
+    items: any[];
+    notes?: string;
+  }
+): Bill {
+  const billId = crypto.randomUUID();
+  const billNumber = `HELD-${Date.now().toString().slice(-6)}`;
+  const now = new Date().toISOString();
+
+  let subtotal = 0;
+  for (const item of data.items) {
+    subtotal += Math.round((item.soldPrice || item.listPrice) * item.qty);
+  }
+
+  const runTx = db.transaction(() => {
+    db.prepare(`
+      INSERT INTO bills (
+        id, bill_number, status, shift_id, cashier_id,
+        subtotal, discount_total, tax_total, round_off, grand_total,
+        payment_status, notes, created_at
+      ) VALUES (?, ?, 'held', ?, ?, ?, 0, 0, 0, ?, 'unpaid', ?, ?)
+    `).run(billId, billNumber, data.shiftId, data.cashierId, subtotal, subtotal, data.notes || null, now);
+
+    const insertItem = db.prepare(`
+      INSERT INTO bill_items (
+        id, bill_id, product_id, is_custom, name_snapshot, sku_snapshot,
+        qty, unit, list_price_snapshot, sold_price, line_discount, gst_rate,
+        tax_amount, line_total, purchase_price_snapshot, price_override_reason, override_approved_by
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    for (const item of data.items) {
+      insertItem.run(
+        crypto.randomUUID(),
+        billId,
+        item.productId || null,
+        item.isCustom ? 1 : 0,
+        item.name,
+        item.sku || null,
+        item.qty,
+        item.unit || 'piece',
+        item.listPrice || 0,
+        item.soldPrice || item.listPrice || 0,
+        item.lineDiscount || 0,
+        item.gstRate || 0,
+        0,
+        Math.round((item.soldPrice || item.listPrice) * item.qty),
+        null,
+        null,
+        null
+      );
+    }
+  });
+
+  runTx();
+
+  return db.prepare('SELECT * FROM bills WHERE id = ?').get(billId) as Bill;
+}
+
+// Void a Completed Bill (Admin only, restores inventory)
+export function voidBill(
+  db: Database,
+  data: {
+    billId: string;
+    adminUserId: string;
+    reason: string;
+  }
+): { success: boolean; bill: Bill } {
+  if (!data.reason || data.reason.trim().length === 0) {
+    throw new Error('A mandatory reason is required to void a completed bill.');
+  }
+
+  const bill = db.prepare('SELECT * FROM bills WHERE id = ?').get(data.billId) as Bill | undefined;
+  if (!bill) {
+    throw new Error('Bill not found.');
+  }
+  if (bill.status === 'voided') {
+    throw new Error('Bill is already voided.');
+  }
+
+  const now = new Date().toISOString();
+  const items = db.prepare('SELECT * FROM bill_items WHERE bill_id = ?').all(data.billId) as BillItem[];
+
+  const runTx = db.transaction(() => {
+    // 1. Restore stock movements for all inventory items
+    for (const item of items) {
+      if (item.product_id && item.is_custom === 0) {
+        createStockMovement(db, {
+          productId: item.product_id,
+          movementType: 'void_restore',
+          qtyChange: item.qty, // positive restore
+          reason: `Void of bill ${bill.bill_number}: ${data.reason}`,
+          referenceType: 'bill',
+          referenceId: bill.id,
+          userId: data.adminUserId,
+          approvedBy: data.adminUserId,
+        });
+      }
+    }
+
+    // 2. Mark bill as voided
+    db.prepare(`
+      UPDATE bills 
+      SET status = 'voided', voided_at = ?, voided_by = ?, void_reason = ?
+      WHERE id = ?
+    `).run(now, data.adminUserId, data.reason, data.billId);
+
+    // 3. Log high severity audit entry
+    logAudit(db, {
+      userId: data.adminUserId,
+      actingRole: 'admin',
+      action: 'BILL_VOIDED',
+      entityType: 'bills',
+      entityId: bill.id,
+      oldValue: { status: bill.status, grandTotal: bill.grand_total },
+      newValue: { status: 'voided', voidedAt: now, reason: data.reason },
+      reason: data.reason,
+      approvedBy: data.adminUserId,
+      severity: 'warning',
+    });
+  });
+
+  runTx();
+  const updated = db.prepare('SELECT * FROM bills WHERE id = ?').get(data.billId) as Bill;
+  return { success: true, bill: updated };
+}
+
+// Custom items awaiting review aggregation
+export function getCustomItemsReviewList(db: Database): any[] {
+  return db.prepare(`
+    SELECT 
+      name_snapshot as name,
+      COUNT(*) as count,
+      SUM(line_total) as total_revenue,
+      MAX(b.created_at) as last_sold_at,
+      MAX(sold_price) as last_sold_price
+    FROM bill_items bi
+    JOIN bills b ON b.id = bi.bill_id
+    WHERE bi.is_custom = 1 AND b.status = 'completed'
+    GROUP BY name_snapshot
+    ORDER BY count DESC, total_revenue DESC
+  `).all();
+}

@@ -1,0 +1,17 @@
+node_modules/
+dist/
+build/
+.env
+.env.local
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+data/*.db*
+!data/.gitkeep
+data/backups/*
+!data/backups/.gitkeep
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
