@@ -51,21 +51,21 @@ export const Header: React.FC<{ onOpenHelp: () => void }> = ({ onOpenHelp }) => 
   };
 
   return (
-    <header className="bg-coastal-900 text-white shadow-md select-none sticky top-0 z-40">
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 py-2 flex items-center justify-between gap-2">
+    <header className="bg-coastal-900 text-white shadow-md select-none sticky top-0 z-40 w-full shrink-0">
+      <div className="w-full px-3 sm:px-4 py-1.5 flex items-center justify-between gap-2">
         {/* Brand & Store Name */}
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-saffron-500 flex items-center justify-center text-slate-950 font-bold shadow-md shadow-saffron-500/20">
-            <Store className="w-5 h-5 text-coastal-950" />
+        <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-saffron-500 flex items-center justify-center text-slate-950 font-bold shadow-md shadow-saffron-500/20 shrink-0">
+            <Store className="w-4 h-4 sm:w-5 sm:h-5 text-coastal-950" />
           </div>
           <div>
-            <h1 className="font-bold text-base sm:text-lg leading-none tracking-tight flex items-center gap-1.5 text-white">
+            <h1 className="font-bold text-sm sm:text-base leading-none tracking-tight flex items-center gap-1 text-white">
               {settings?.store_name || 'Mangalore Store'}
-              <span className="text-[10px] uppercase font-semibold tracking-wider bg-coastal-800 text-coastal-200 px-1.5 py-0.5 rounded border border-coastal-700">
+              <span className="text-[9px] uppercase font-bold tracking-wider bg-coastal-800 text-coastal-200 px-1 py-0.2 rounded border border-coastal-700">
                 POS
               </span>
             </h1>
-            <p className="text-[11px] text-coastal-300 font-medium">Mathikere, Bengaluru</p>
+            <p className="text-[10px] text-coastal-300 font-medium">Mathikere, Bengaluru</p>
           </div>
         </div>
 

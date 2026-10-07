@@ -9,15 +9,14 @@ import { DiscountModal } from '../components/billing/DiscountModal';
 import { HeldBillsModal } from '../components/billing/HeldBillsModal';
 import { ReceiptModal } from '../components/billing/ReceiptModal';
 import { usePos } from '../context/PosContext';
-import { Clock, User } from 'lucide-react';
-import { formatPaise } from '../utils/formatters';
+import { Clock } from 'lucide-react';
 
 export const BillingPage: React.FC = () => {
   const { currentShift } = usePos();
 
   return (
-    <div className="flex-1 flex flex-col lg:flex-row h-full overflow-hidden bg-slate-100 dark:bg-slate-950 p-2 sm:p-3 gap-2 sm:gap-3">
-      {/* Left Column (Wide) / Top Section (Squarish): Search & Quick Catalog */}
+    <div className="flex-1 flex flex-row h-full overflow-hidden bg-slate-100 dark:bg-slate-950 p-2 sm:p-2.5 gap-2 sm:gap-2.5">
+      {/* Left Column: Search & Quick Catalog */}
       <div className="flex-1 flex flex-col gap-2 min-w-0 h-full overflow-hidden">
         {/* Search Bar */}
         <div className="shrink-0">
@@ -25,8 +24,8 @@ export const BillingPage: React.FC = () => {
         </div>
 
         {/* Quick Buttons / Catalog */}
-        <div className="flex-1 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col">
-          <div className="px-4 py-2.5 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-200">
+        <div className="flex-1 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden flex flex-col min-h-0">
+          <div className="px-3 py-1.5 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-200 shrink-0">
             <span>Quick Touch Catalog</span>
             {currentShift && (
               <span className="text-coastal-700 dark:text-coastal-400 flex items-center gap-1 font-semibold text-[11px]">
@@ -34,19 +33,19 @@ export const BillingPage: React.FC = () => {
               </span>
             )}
           </div>
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 overflow-hidden min-h-0 flex flex-col">
             <QuickButtons />
           </div>
         </div>
       </div>
 
-      {/* Right Column (Wide) / Bottom Section (Squarish): Cart & Totals Checkout */}
-      <div className="w-full lg:w-[420px] xl:w-[480px] flex flex-col h-full shrink-0 gap-2 overflow-hidden">
+      {/* Right Column: Cart & Totals Checkout (Maintains persistent side-by-side on square & wide screens) */}
+      <div className="w-[340px] sm:w-[370px] md:w-[390px] lg:w-[420px] xl:w-[450px] flex flex-col h-full shrink-0 gap-2 overflow-hidden">
         {/* Cart Container */}
-        <div className="flex-1 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col">
-          <div className="px-4 py-2.5 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-200">
+        <div className="flex-1 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden flex flex-col min-h-0">
+          <div className="px-3 py-1.5 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-200 shrink-0">
             <span>Current Sale Cart</span>
-            <span className="text-[11px] text-slate-500 font-normal">Auto-saves line items</span>
+            <span className="text-[10px] text-slate-400 font-normal">Auto-saves line items</span>
           </div>
           <CartTable />
         </div>

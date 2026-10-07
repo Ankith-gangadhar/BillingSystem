@@ -9,6 +9,11 @@ export function runSeed(db = getDb()) {
 
   // 1. Clear existing non-schema data for clean demo
   db.exec(`
+    DROP TRIGGER IF EXISTS trg_prevent_stock_movements_update;
+    DROP TRIGGER IF EXISTS trg_prevent_stock_movements_delete;
+    DROP TRIGGER IF EXISTS trg_prevent_audit_log_update;
+    DROP TRIGGER IF EXISTS trg_prevent_audit_log_delete;
+
     DELETE FROM return_items;
     DELETE FROM returns;
     DELETE FROM purchase_items;
@@ -407,6 +412,33 @@ export function runSeed(db = getDb()) {
 
     db.prepare("UPDATE bills SET status = 'partially_returned' WHERE id = ?").run(sampleBill.id);
   }
+
+  // Re-enable immutability triggers
+  db.exec(`
+    CREATE TRIGGER IF NOT EXISTS trg_prevent_stock_movements_update
+    BEFORE UPDATE ON stock_movements
+    BEGIN
+      SELECT RAISE(FAIL, 'ERROR: stock_movements records are immutable and cannot be updated.');
+    END;
+
+    CREATE TRIGGER IF NOT EXISTS trg_prevent_stock_movements_delete
+    BEFORE DELETE ON stock_movements
+    BEGIN
+      SELECT RAISE(FAIL, 'ERROR: stock_movements records are immutable and cannot be deleted.');
+    END;
+
+    CREATE TRIGGER IF NOT EXISTS trg_prevent_audit_log_update
+    BEFORE UPDATE ON audit_log
+    BEGIN
+      SELECT RAISE(FAIL, 'ERROR: audit_log records are immutable and cannot be updated.');
+    END;
+
+    CREATE TRIGGER IF NOT EXISTS trg_prevent_audit_log_delete
+    BEFORE DELETE ON audit_log
+    BEGIN
+      SELECT RAISE(FAIL, 'ERROR: audit_log records are immutable and cannot be deleted.');
+    END;
+  `);
 
   // Initialize search index with seeded products
   searchEngine.initIndex(db);

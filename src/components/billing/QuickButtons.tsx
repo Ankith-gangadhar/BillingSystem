@@ -71,7 +71,7 @@ export const QuickButtons: React.FC = () => {
       </div>
 
       {/* Touch-Friendly Grid Tiles (Min 44px height, high contrast) */}
-      <div className="p-2 sm:p-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 gap-2 overflow-y-auto max-h-[42vh] sm:max-h-full">
+      <div className="flex-1 p-2 sm:p-2.5 grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-2 overflow-y-auto min-h-0">
         {filteredProducts.map((prod) => {
           const isOutOfStock = prod.current_stock <= 0;
 
@@ -79,10 +79,10 @@ export const QuickButtons: React.FC = () => {
             <button
               key={prod.id}
               onClick={() => addItem(prod)}
-              className="group relative flex flex-col justify-between p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-coastal-500 dark:hover:border-coastal-500 hover:shadow-md transition-all text-left min-h-[82px] active:scale-[0.98]"
+              className="group relative flex flex-col justify-between p-2.5 sm:p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-coastal-500 dark:hover:border-coastal-500 hover:shadow-md transition-all text-left min-h-[76px] active:scale-[0.98]"
             >
               <div>
-                <span className="text-[10px] font-semibold text-coastal-600 dark:text-coastal-400 uppercase tracking-wider block truncate">
+                <span className="text-[9px] font-semibold text-coastal-600 dark:text-coastal-400 uppercase tracking-wider block truncate">
                   {prod.category_name || 'Item'}
                 </span>
                 <h4 className="font-bold text-xs sm:text-sm text-slate-800 dark:text-slate-100 line-clamp-2 leading-tight mt-0.5">
@@ -90,7 +90,7 @@ export const QuickButtons: React.FC = () => {
                 </h4>
               </div>
 
-              <div className="flex items-baseline justify-between mt-2 pt-1 border-t border-slate-100 dark:border-slate-800/60">
+              <div className="flex items-baseline justify-between mt-1.5 pt-1 border-t border-slate-100 dark:border-slate-800/60">
                 <span className="font-extrabold text-sm sm:text-base text-coastal-800 dark:text-coastal-300">
                   {formatPaise(prod.selling_price)}
                 </span>
