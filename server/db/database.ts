@@ -56,7 +56,7 @@ function initSchema(db: Database.Database) {
 
 export const DEFAULT_SETTINGS: Settings = {
   store_name: 'Mangalore Store',
-  address: 'Shop #4, Mathikere Main Road, Mathikere, Bengaluru - 560054',
+  address: '8th Main Cross Rd, Nanjappa Reddy Colony, Gokula 1st Stage, Mathikere Extension, Mathikere, Bengaluru, Karnataka 560054',
   phone: '+91 98450 12345',
   gstin: '',
   receipt_footer: 'Authentic Coastal Karnataka Snacks & Spices. Visit Again!',

@@ -22,10 +22,10 @@ export const ReceiptModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 z-50 animate-in fade-in-50 duration-150 select-none">
+    <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 z-50 animate-in fade-in-50 duration-150 select-none">
       <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
         {/* Modal Header */}
-        <div className="p-4 bg-coastal-900 text-white flex items-center justify-between">
+        <div className="p-4 bg-coastal-900 text-white flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2">
             <Printer className="w-5 h-5 text-saffron-400" />
             <h3 className="font-bold text-base">Receipt Preview</h3>
@@ -39,11 +39,11 @@ export const ReceiptModal: React.FC = () => {
         </div>
 
         {/* Receipt Thermal Card (80mm Width Style) */}
-        <div className="p-4 overflow-y-auto flex-1 bg-slate-100 dark:bg-slate-950 flex justify-center">
+        <div className="p-3 sm:p-4 overflow-y-auto flex-1 bg-slate-100 dark:bg-slate-950 flex justify-center items-start min-h-0">
           <div
             id="printable-receipt"
             ref={receiptRef}
-            className="w-full max-w-[340px] bg-white text-slate-900 p-4 shadow-md font-mono text-xs leading-tight rounded-xl border border-slate-200"
+            className="w-full max-w-[360px] bg-white text-slate-900 p-4 sm:p-5 shadow-lg font-mono text-xs leading-tight rounded-2xl border border-slate-200 shrink-0 h-fit"
           >
             {/* Header */}
             <div className="text-center pb-2 border-b border-dashed border-slate-300">
@@ -72,13 +72,13 @@ export const ReceiptModal: React.FC = () => {
 
             {/* Line Items Table */}
             <div className="py-2 border-b border-dashed border-slate-300">
-              <table className="w-full text-left">
+              <table className="w-full text-left table-fixed">
                 <thead>
                   <tr className="border-b border-slate-200 text-[10px] font-bold uppercase text-slate-500">
-                    <th className="pb-1">Item</th>
-                    <th className="pb-1 text-center">Qty</th>
-                    <th className="pb-1 text-right">Rate</th>
-                    <th className="pb-1 text-right">Amt</th>
+                    <th className="pb-1 text-left w-[44%] pr-1">Item</th>
+                    <th className="pb-1 text-center w-[13%] px-0.5">Qty</th>
+                    <th className="pb-1 text-right w-[21%] pr-2 pl-0.5">Rate</th>
+                    <th className="pb-1 text-right w-[22%] pl-1 font-bold">Amt</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -86,14 +86,18 @@ export const ReceiptModal: React.FC = () => {
                     const originalRate = it.list_price_snapshot ?? it.listPrice ?? it.sold_price ?? it.soldPrice ?? 0;
                     const lineAmt = Math.round(originalRate * it.qty);
                     return (
-                      <tr key={idx} className="py-1">
-                        <td className="py-1 pr-1 font-sans font-semibold text-xs leading-tight">
+                      <tr key={idx} className="align-top">
+                        <td className="py-1 pr-1 font-sans font-semibold text-[11px] leading-tight break-words">
                           {it.name_snapshot || it.name}
-                          {it.is_custom ? ' (Custom)' : ''}
+                          {it.is_custom && it.name !== 'Carry Bag' ? ' (Custom)' : ''}
                         </td>
-                        <td className="py-1 text-center">{it.qty}</td>
-                        <td className="py-1 text-right">{formatPaise(originalRate, false)}</td>
-                        <td className="py-1 text-right font-bold">{formatPaise(lineAmt, false)}</td>
+                        <td className="py-1 px-0.5 text-center font-mono text-[11px] align-top">{it.qty}</td>
+                        <td className="py-1 pr-2 pl-0.5 text-right font-mono text-[11px] whitespace-nowrap align-top">
+                          {formatPaise(originalRate, false)}
+                        </td>
+                        <td className="py-1 pl-1 text-right font-mono text-[11px] font-bold whitespace-nowrap align-top">
+                          {formatPaise(lineAmt, false)}
+                        </td>
                       </tr>
                     );
                   })}

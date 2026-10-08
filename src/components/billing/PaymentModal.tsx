@@ -31,11 +31,13 @@ export const PaymentModal: React.FC = () => {
     setLastCompletedBill,
     selectedCustomer,
     setFinalPrice,
+    includeCarryBag,
+    carryBagChargePaise,
   } = usePos();
 
   const { user } = useAuth();
 
-  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('cash');
+  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('upi');
   const [tenderedRs, setTenderedRs] = useState<string>('');
   const [upiAmountRs, setUpiAmountRs] = useState<string>('');
   const [upiRef, setUpiRef] = useState<string>('');
@@ -52,7 +54,7 @@ export const PaymentModal: React.FC = () => {
 
   useEffect(() => {
     if (isPaymentModalOpen) {
-      setSelectedMethod('cash');
+      setSelectedMethod('upi');
       setTenderedRs(grandTotalRupees.toString());
       setUpiAmountRs(grandTotalRupees.toString());
       setUpiRef('');
@@ -60,8 +62,8 @@ export const PaymentModal: React.FC = () => {
       setIsSplitMode(false);
       setErrorMsg(null);
       setSplitPayments([
-        { method: 'cash', amount: Math.floor(grandTotal / 2) },
-        { method: 'upi', amount: grandTotal - Math.floor(grandTotal / 2) },
+        { method: 'upi', amount: Math.floor(grandTotal / 2) },
+        { method: 'cash', amount: grandTotal - Math.floor(grandTotal / 2) },
       ]);
     }
   }, [isPaymentModalOpen, grandTotal, grandTotalRupees]);
@@ -87,7 +89,7 @@ export const PaymentModal: React.FC = () => {
   };
 
   const handleCompleteSale = async () => {
-    if (cart.length === 0) return;
+    if (cart.length === 0 && !includeCarryBag) return;
     setIsSubmitting(true);
     setErrorMsg(null);
 
@@ -137,23 +139,42 @@ export const PaymentModal: React.FC = () => {
         ];
       }
 
+      const itemsPayload: any[] = cart.map((item) => ({
+        productId: item.product_id,
+        isCustom: item.is_custom,
+        name: item.name,
+        sku: item.sku,
+        qty: item.qty,
+        unit: item.unit,
+        listPrice: item.list_price,
+        soldPrice: item.sold_price,
+        lineDiscount: item.line_discount,
+        gstRate: item.gst_rate,
+        priceOverrideReason: item.price_override_reason || null,
+        overrideApprovedBy: item.override_approved_by || null,
+      }));
+
+      if (includeCarryBag && carryBagChargePaise > 0) {
+        itemsPayload.push({
+          productId: null,
+          isCustom: true,
+          name: 'Carry Bag',
+          sku: null,
+          qty: 1,
+          unit: 'piece',
+          listPrice: carryBagChargePaise,
+          soldPrice: carryBagChargePaise,
+          lineDiscount: 0,
+          gstRate: 0,
+          priceOverrideReason: null,
+          overrideApprovedBy: null,
+        });
+      }
+
       const payload = {
         shiftId: currentShift?.id,
         customerId: selectedCustomer?.id || null,
-        items: cart.map((item) => ({
-          productId: item.product_id,
-          isCustom: item.is_custom,
-          name: item.name,
-          sku: item.sku,
-          qty: item.qty,
-          unit: item.unit,
-          listPrice: item.list_price,
-          soldPrice: item.sold_price,
-          lineDiscount: item.line_discount,
-          gstRate: item.gst_rate,
-          priceOverrideReason: item.price_override_reason || null,
-          overrideApprovedBy: item.override_approved_by || null,
-        })),
+        items: itemsPayload,
         payments: paymentsPayload,
         billDiscountTotal: totalBillDiscount,
         notes: notes || null,
@@ -211,7 +232,7 @@ export const PaymentModal: React.FC = () => {
                   {isLesserTender ? 'Adjusted Bill Amount' : 'Amount Payable'}
                 </span>
                 <div className="flex items-center gap-2 mt-0.5">
-                  <span className="text-xs text-slate-500">{cart.length} items in cart</span>
+                  <span className="text-xs text-slate-500">{cart.length + (includeCarryBag ? 1 : 0)} items in bill</span>
                   <button
                     type="button"
                     onClick={() => setShowBillItems(!showBillItems)}
@@ -242,6 +263,12 @@ export const PaymentModal: React.FC = () => {
                     <span className="font-semibold shrink-0">{formatPaise(item.sold_price * item.qty)}</span>
                   </div>
                 ))}
+                {includeCarryBag && (
+                  <div className="flex justify-between text-slate-700 dark:text-slate-300 font-medium">
+                    <span className="truncate pr-2">Carry Bag × 1</span>
+                    <span className="font-semibold shrink-0">{formatPaise(carryBagChargePaise)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between font-bold pt-1 border-t border-dashed border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
                   <span>Subtotal:</span>
                   <span>{formatPaise(subtotal)}</span>
@@ -262,22 +289,6 @@ export const PaymentModal: React.FC = () => {
               type="button"
               onClick={() => {
                 setIsSplitMode(false);
-                setSelectedMethod('cash');
-              }}
-              className={`p-2.5 rounded-xl border flex flex-col items-center gap-1 font-bold text-xs transition-all ${
-                !isSplitMode && selectedMethod === 'cash'
-                  ? 'bg-coastal-800 text-white border-coastal-800 shadow-sm'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-200'
-              }`}
-            >
-              <Banknote className="w-4 h-4 text-emerald-500" />
-              <span>Cash</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setIsSplitMode(false);
                 setSelectedMethod('upi');
               }}
               className={`p-2.5 rounded-xl border flex flex-col items-center gap-1 font-bold text-xs transition-all ${
@@ -288,6 +299,22 @@ export const PaymentModal: React.FC = () => {
             >
               <QrCode className="w-4 h-4 text-indigo-500" />
               <span>UPI / QR</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setIsSplitMode(false);
+                setSelectedMethod('cash');
+              }}
+              className={`p-2.5 rounded-xl border flex flex-col items-center gap-1 font-bold text-xs transition-all ${
+                !isSplitMode && selectedMethod === 'cash'
+                  ? 'bg-coastal-800 text-white border-coastal-800 shadow-sm'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-200'
+              }`}
+            >
+              <Banknote className="w-4 h-4 text-emerald-500" />
+              <span>Cash</span>
             </button>
 
             <button
@@ -448,30 +475,30 @@ export const PaymentModal: React.FC = () => {
               <h4 className="font-bold text-xs text-slate-700 dark:text-slate-300">Split Breakdown</h4>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="text-[11px] font-medium text-slate-500">Cash Amount (₹):</label>
+                  <label className="text-[11px] font-medium text-slate-500">UPI Amount (₹):</label>
                   <input
                     type="number"
                     value={splitPayments[0]?.amount ? splitPayments[0].amount / 100 : ''}
                     onChange={(e) => {
                       const v = parsePaise(e.target.value || '0');
                       setSplitPayments([
-                        { method: 'cash', amount: v },
-                        { method: 'upi', amount: Math.max(0, grandTotal - v) },
+                        { method: 'upi', amount: v },
+                        { method: 'cash', amount: Math.max(0, grandTotal - v) },
                       ]);
                     }}
                     className="w-full h-9 px-2 font-bold text-sm rounded-lg border border-slate-200 dark:border-slate-700"
                   />
                 </div>
                 <div>
-                  <label className="text-[11px] font-medium text-slate-500">UPI Amount (₹):</label>
+                  <label className="text-[11px] font-medium text-slate-500">Cash Amount (₹):</label>
                   <input
                     type="number"
                     value={splitPayments[1]?.amount ? splitPayments[1].amount / 100 : ''}
                     onChange={(e) => {
                       const v = parsePaise(e.target.value || '0');
                       setSplitPayments([
-                        { method: 'cash', amount: Math.max(0, grandTotal - v) },
-                        { method: 'upi', amount: v },
+                        { method: 'upi', amount: Math.max(0, grandTotal - v) },
+                        { method: 'cash', amount: v },
                       ]);
                     }}
                     className="w-full h-9 px-2 font-bold text-sm rounded-lg border border-slate-200 dark:border-slate-700"
