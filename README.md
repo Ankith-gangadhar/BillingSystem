@@ -15,6 +15,20 @@
 - **📝 Mid-Bill Unlisted Custom Items**: Sell unlisted items on the fly with automatic tracking in the "Custom Items to Review" admin queue for 1-click product conversion.
 - **🤝 On-The-Spot Price Negotiation & Discounts**: "Set Final Price" helper (e.g. ₹85 down to ₹80) with integer-paise proportional discount distribution across cart lines and inline Admin PIN elevation.
 - **📊 Thermal & Standard Receipts**: Native support for 58mm, 80mm thermal receipt printers, A4 invoices, duplicate receipt stamping, and 1-click WhatsApp web sharing.
+- **📦 1-Click Windows App & Auto-Updates**: Seamless packaging with Electron Builder, direct GitHub Releases `.exe` downloads, and automatic in-app update notifications.
+
+---
+
+## 💾 Download Windows App (`.exe`)
+
+You can download the ready-to-run Windows installer or standalone portable executable directly from GitHub:
+
+[![Download for Windows](https://img.shields.io/badge/Download-Windows_Installer_(.exe)-0078D7?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/Ankith-gangadhar/BillingSystem/releases/latest)
+
+1. Open the [**Latest GitHub Release**](https://github.com/Ankith-gangadhar/BillingSystem/releases/latest).
+2. Download `Mangalore-Store-POS-Setup-X.X.X.exe` (or the portable `Mangalore-Store-POS-X.X.X-portable.exe`).
+3. Run the installer on the shop's PC — all SQLite databases, offline servers, and UI run locally.
+4. **Auto Update**: When a new version is tagged and pushed on GitHub, the shop's PC automatically displays an in-app **"Update Available"** alert banner with a 1-click download button.
 
 ---
 

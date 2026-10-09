@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { usePos } from '../../context/PosContext';
+import { useAppUpdate, UpdateNotificationBanner } from '../common/UpdateChecker';
 import {
   Store,
   User as UserIcon,
@@ -12,12 +13,14 @@ import {
   Sparkles,
   HelpCircle,
   Database,
+  ArrowUpCircle,
 } from 'lucide-react';
 import { formatPaise } from '../../utils/formatters';
 
 export const Header: React.FC<{ onOpenHelp: () => void }> = ({ onOpenHelp }) => {
   const { user, isAdmin, isOwnerAtCounter, toggleOwnerPresence, updateProfileName, lockSession, logout, settings } = useAuth();
   const { heldBillsCount, setIsHeldBillsModalOpen } = usePos();
+  const { releaseInfo, dismissedVersion, setDismissedVersion, checkForUpdates, isChecking } = useAppUpdate();
   const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
   const [isEditNameModalOpen, setIsEditNameModalOpen] = useState<boolean>(false);
   const [tempName, setTempName] = useState<string>('');
@@ -73,6 +76,12 @@ export const Header: React.FC<{ onOpenHelp: () => void }> = ({ onOpenHelp }) => 
 
   return (
     <>
+      <UpdateNotificationBanner
+        releaseInfo={releaseInfo}
+        dismissedVersion={dismissedVersion}
+        onDismiss={(ver) => setDismissedVersion(ver)}
+      />
+
       <header className="backdrop-blur-xl bg-coastal-950/85 text-white border-b border-white/10 shadow-lg select-none sticky top-0 z-40 w-full shrink-0">
         <div className="w-full px-3 sm:px-4 py-2 flex items-center justify-between gap-2">
           {/* Brand & Store Name */}

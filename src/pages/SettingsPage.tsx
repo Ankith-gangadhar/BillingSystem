@@ -214,6 +214,70 @@ export const SettingsPage: React.FC = () => {
             </label>
           </div>
         </div>
+
+        {/* App Version & GitHub Updates Card */}
+        <div className="glass-panel p-5 rounded-3xl space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-2xl bg-coastal-500/15 flex items-center justify-center text-coastal-700 dark:text-coastal-300">
+                <ShieldCheck className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-extrabold text-sm text-slate-800 dark:text-slate-200">
+                  App Version & Updates
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Current Version: <strong>v{currentVersion}</strong> • GitHub Release Channel
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              disabled={isChecking}
+              onClick={() => checkForUpdates(true)}
+              className="px-4 py-2 rounded-xl glass-btn text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5 transition-all"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isChecking ? 'animate-spin text-coastal-600' : ''}`} />
+              <span>{isChecking ? 'Checking...' : 'Check for Updates'}</span>
+            </button>
+          </div>
+
+          {releaseInfo && (
+            <div className={`p-4 rounded-2xl border transition-all ${
+              releaseInfo.hasUpdate
+                ? 'bg-amber-500/10 border-amber-500/30 text-amber-900 dark:text-amber-200'
+                : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-900 dark:text-emerald-200'
+            }`}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-black text-sm">
+                      {releaseInfo.hasUpdate
+                        ? `🚀 Update Available: ${releaseInfo.tagName}`
+                        : `✅ You are on the latest version (${releaseInfo.tagName})`}
+                    </span>
+                  </div>
+                  <p className="text-xs mt-1 text-slate-600 dark:text-slate-400">
+                    {releaseInfo.hasUpdate
+                      ? 'A newer version has been published to GitHub Releases. Download the installer to update.'
+                      : 'Your desktop terminal is up to date with the latest release on GitHub.'}
+                  </p>
+                </div>
+
+                <a
+                  href={releaseInfo.downloadUrl || releaseInfo.htmlUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 rounded-xl glass-btn-primary text-xs font-black flex items-center gap-1.5 shadow-md shrink-0 ml-3"
+                >
+                  <Download className="w-3.5 h-3.5 text-saffron-300" />
+                  <span>{releaseInfo.hasUpdate ? 'Download Setup.exe' : 'View on GitHub'}</span>
+                </a>
+              </div>
+            </div>
+          )}
+        </div>
       </form>
     </div>
   );
