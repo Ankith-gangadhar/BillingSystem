@@ -444,27 +444,55 @@ input[type=number] {
   -moz-appearance: textfield;
 }
 
-/* Print Stylesheet for Thermal and Standard Receipts */
+/* Print Stylesheet for Thermal (80mm / 58mm) and Standard Receipts */
 @media print {
-  body * {
-    visibility: hidden;
+  /* Unclip all root containers and scroll viewports */
+  html, body, #root, #root > div, main, .h-screen, .w-screen {
+    overflow: visible !important;
+    height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
+    position: static !important;
+    background: #ffffff !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
-  
-  #printable-receipt, #printable-receipt * {
-    visibility: visible;
+
+  /* Hide everything on the page by default */
+  body * {
+    visibility: hidden !important;
+  }
+
+  /* Explicitly isolate and render the printable receipt */
+  #printable-receipt,
+  #printable-receipt * {
+    visibility: visible !important;
   }
   
   #printable-receipt {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    margin: 0;
-    padding: 0;
-    background: white;
-    color: black;
-    font-size: 12px;
-    line-height: 1.3;
+    display: block !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    max-width: 80mm !important;
+    margin: 0 auto !important;
+    padding: 2mm !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 11px !important;
+    line-height: 1.25 !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    overflow: visible !important;
+    page-break-inside: avoid !important;
+  }
+
+  #printable-receipt table,
+  #printable-receipt tbody,
+  #printable-receipt tr {
+    page-break-inside: avoid !important;
   }
 
   @page {
