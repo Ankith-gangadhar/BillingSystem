@@ -4,7 +4,7 @@ import fs from 'fs';
 import crypto from 'crypto';
 import { Settings } from '../../shared/types';
 
-const DATA_DIR = path.join(process.cwd(), 'data');
+const DATA_DIR = process.env.DATA_DIR || path.join(process.cwd(), 'data');
 const DB_PATH = path.join(DATA_DIR, 'mangalore_store.db');
 
 if (!fs.existsSync(DATA_DIR)) {
@@ -41,15 +41,19 @@ export function initTestDb(customPath?: string): Database.Database {
 }
 
 function initSchema(db: Database.Database) {
-  const schemaPath = path.join(__dirname, 'schema.sql');
-  if (fs.existsSync(schemaPath)) {
-    const schemaSql = fs.readFileSync(schemaPath, 'utf8');
-    db.exec(schemaSql);
-  } else {
-    // In compiled distribution, check relative to root or dist
-    const fallbackPath = path.join(process.cwd(), 'server', 'db', 'schema.sql');
-    if (fs.existsSync(fallbackPath)) {
-      db.exec(fs.readFileSync(fallbackPath, 'utf8'));
+  const candidatePaths = [
+    path.join(__dirname, 'schema.sql'),
+    path.join(__dirname, 'db', 'schema.sql'),
+    path.join(process.cwd(), 'server', 'db', 'schema.sql'),
+    path.join(process.cwd(), 'resources', 'server', 'db', 'schema.sql'),
+    path.join(__dirname, '../../server/db/schema.sql'),
+    path.join(__dirname, '../../../server/db/schema.sql'),
+  ];
+  for (const p of candidatePaths) {
+    if (fs.existsSync(p)) {
+      const schemaSql = fs.readFileSync(p, 'utf8');
+      db.exec(schemaSql);
+      return;
     }
   }
 }

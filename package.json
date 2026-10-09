@@ -2,7 +2,7 @@
   "name": "mangalore-store-pos",
   "version": "1.0.0",
   "description": "Mangalore Store Point of Sale & Inventory Management System",
-  "main": "dist/electron/main.js",
+  "main": "dist-electron/electron/main.js",
   "scripts": {
     "dev:server": "tsx watch server/index.ts",
     "dev:client": "vite",
@@ -86,12 +86,12 @@
     },
     "files": [
       "dist/**/*",
-      "dist-server/**/*",
-      "server/**/*",
+      "dist-electron/**/*",
+      "server/db/schema.sql",
       "package.json"
     ],
     "extraMetadata": {
-      "main": "dist/electron/main.js"
+      "main": "dist-electron/electron/main.js"
     },
     "win": {
       "target": [

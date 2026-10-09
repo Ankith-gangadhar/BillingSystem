@@ -1,5 +1,6 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
+import fs from 'fs';
 import { startServer } from '../server/index';
 
 let mainWindow: BrowserWindow | null = null;
@@ -26,7 +27,7 @@ function createWindow() {
     mainWindow.loadURL('http://127.0.0.1:5173');
     mainWindow.webContents.openDevTools({ mode: 'detach' });
   } else {
-    mainWindow.loadFile(path.join(__dirname, '../index.html'));
+    mainWindow.loadFile(path.join(app.getAppPath(), 'dist', 'index.html'));
   }
 
   mainWindow.on('closed', () => {
@@ -35,6 +36,16 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+  const isDev = process.env.ELECTRON_DEV === '1';
+  if (!isDev) {
+    const userDataDir = app.getPath('userData');
+    const dataDir = path.join(userDataDir, 'data');
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
+    }
+    process.env.DATA_DIR = dataDir;
+  }
+
   // Start local backend server on 127.0.0.1:3001
   serverInstance = startServer(3001);
   createWindow();
