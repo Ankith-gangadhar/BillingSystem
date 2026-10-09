@@ -46,11 +46,11 @@ export const CartTable: React.FC = () => {
 
   if (cart.length === 0) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center p-4 text-center text-slate-400 dark:text-slate-500 bg-white/40 dark:bg-slate-900/40 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 m-2">
-        <div className="w-11 h-11 rounded-2xl bg-coastal-50 dark:bg-coastal-950/40 flex items-center justify-center text-coastal-600 dark:text-coastal-400 mb-2">
-          <ShoppingBag className="w-5 h-5" />
+      <div className="flex-1 flex flex-col items-center justify-center p-6 text-center text-slate-400 dark:text-slate-500 glass-inset rounded-3xl m-3 border border-dashed border-white/40 dark:border-white/10">
+        <div className="w-12 h-12 rounded-2xl bg-coastal-500/15 flex items-center justify-center text-coastal-700 dark:text-coastal-300 mb-2.5 shadow-inner">
+          <ShoppingBag className="w-6 h-6" />
         </div>
-        <h3 className="font-bold text-sm text-slate-700 dark:text-slate-200">Cart is Empty</h3>
+        <h3 className="font-extrabold text-sm text-slate-700 dark:text-slate-200">Cart is Empty</h3>
         <p className="text-[11px] text-slate-400 max-w-[200px] mt-0.5">
           Scan a barcode or tap any catalog product to start.
         </p>
@@ -59,7 +59,7 @@ export const CartTable: React.FC = () => {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto px-2 py-1 space-y-1.5">
+    <div className="flex-1 overflow-y-auto p-2.5 space-y-2">
       {cart.map((item) => {
         const isRecent = item.clientId === lastAddedClientId;
         const hasDiscount = item.line_discount > 0;
@@ -67,32 +67,32 @@ export const CartTable: React.FC = () => {
         return (
           <div
             key={item.clientId}
-            className={`flex items-center justify-between p-3 rounded-2xl bg-white dark:bg-slate-900 border transition-all ${
+            className={`flex items-center justify-between p-3 rounded-2xl glass-card transition-all ${
               isRecent
-                ? 'border-coastal-500 shadow-md ring-2 ring-coastal-500/10'
-                : 'border-slate-200/80 dark:border-slate-800 hover:border-slate-300'
+                ? 'border-coastal-500 shadow-md ring-2 ring-coastal-500/20 bg-white/90 dark:bg-slate-900/80'
+                : 'hover:border-white/90 dark:hover:border-white/20'
             }`}
           >
             {/* Left: Product Name, Badges & Unit Price */}
             <div className="flex-1 min-w-0 pr-2">
               <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="font-bold text-sm text-slate-800 dark:text-slate-100 leading-snug">
+                <span className="font-extrabold text-xs sm:text-sm text-slate-800 dark:text-slate-100 leading-snug">
                   {item.name}
                 </span>
                 {item.is_custom && (
-                  <span className="text-[10px] font-bold uppercase bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 px-1.5 py-0.2 rounded border border-amber-300">
+                  <span className="text-[10px] font-bold uppercase bg-amber-500/15 text-amber-800 dark:text-amber-300 px-1.5 py-0.2 rounded-md border border-amber-400/30">
                     Custom
                   </span>
                 )}
                 {hasDiscount && (
-                  <span className="text-[10px] font-bold uppercase bg-rose-50 text-rose-600 dark:bg-rose-950/40 px-1.5 py-0.2 rounded border border-rose-200">
+                  <span className="text-[10px] font-bold uppercase bg-rose-500/15 text-rose-600 dark:text-rose-300 px-1.5 py-0.2 rounded-md border border-rose-400/30">
                     Disc -{formatPaise(item.line_discount)}
                   </span>
                 )}
               </div>
 
               <div className="flex items-center gap-2 mt-1 text-xs text-slate-500 dark:text-slate-400">
-                <span>{formatPaise(item.sold_price)} / {item.unit}</span>
+                <span className="font-medium">{formatPaise(item.sold_price)} / {item.unit}</span>
                 {item.sold_price !== item.list_price && (
                   <span className="line-through text-[11px] text-slate-400">
                     {formatPaise(item.list_price)}
@@ -101,7 +101,7 @@ export const CartTable: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => handlePriceOverride(item)}
-                  className="text-coastal-600 hover:text-coastal-800 dark:text-coastal-400 text-[11px] font-semibold underline"
+                  className="text-coastal-700 hover:text-coastal-900 dark:text-coastal-300 text-[11px] font-bold underline"
                   title="Override item price or discount"
                 >
                   Edit Rate
@@ -110,11 +110,11 @@ export const CartTable: React.FC = () => {
             </div>
 
             {/* Middle: Quantity Stepper */}
-            <div className="flex items-center gap-1 shrink-0 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
+            <div className="flex items-center gap-1 shrink-0 glass-inset p-1 rounded-xl">
               <button
                 type="button"
                 onClick={() => updateQty(item.clientId, item.allows_decimal_qty ? Number((item.qty - 0.25).toFixed(2)) : item.qty - 1)}
-                className="w-8 h-8 rounded-lg bg-white dark:bg-slate-700 text-slate-700 dark:text-white flex items-center justify-center font-bold text-sm shadow-xs hover:bg-slate-50 active:scale-95 transition-transform"
+                className="w-7 h-7 rounded-lg glass-btn text-slate-700 dark:text-white flex items-center justify-center font-bold text-sm hover:scale-105 active:scale-95 transition-transform"
                 title="Decrease Qty"
               >
                 <Minus className="w-3.5 h-3.5" />
@@ -128,13 +128,13 @@ export const CartTable: React.FC = () => {
                   const v = parseFloat(e.target.value);
                   if (!isNaN(v) && v >= 0) updateQty(item.clientId, v);
                 }}
-                className="w-12 text-center bg-transparent font-extrabold text-sm text-slate-900 dark:text-white outline-none"
+                className="w-10 text-center bg-transparent font-black text-sm text-slate-900 dark:text-white outline-none"
               />
 
               <button
                 type="button"
                 onClick={() => updateQty(item.clientId, item.allows_decimal_qty ? Number((item.qty + 0.25).toFixed(2)) : item.qty + 1)}
-                className="w-8 h-8 rounded-lg bg-white dark:bg-slate-700 text-slate-700 dark:text-white flex items-center justify-center font-bold text-sm shadow-xs hover:bg-slate-50 active:scale-95 transition-transform"
+                className="w-7 h-7 rounded-lg glass-btn text-slate-700 dark:text-white flex items-center justify-center font-bold text-sm hover:scale-105 active:scale-95 transition-transform"
                 title="Increase Qty"
               >
                 <Plus className="w-3.5 h-3.5" />
@@ -144,7 +144,7 @@ export const CartTable: React.FC = () => {
             {/* Right: Line Total & Delete */}
             <div className="flex items-center gap-2 pl-3 text-right shrink-0">
               <div className="flex flex-col items-end min-w-[70px]">
-                <span className="font-extrabold text-base text-slate-900 dark:text-white leading-tight">
+                <span className="font-extrabold text-xs sm:text-sm text-slate-900 dark:text-white leading-tight">
                   {formatPaise(item.line_total)}
                 </span>
                 {item.allows_decimal_qty && (
@@ -157,7 +157,7 @@ export const CartTable: React.FC = () => {
               <button
                 type="button"
                 onClick={() => removeItem(item.clientId)}
-                className="w-8 h-8 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 flex items-center justify-center transition-colors"
+                className="w-8 h-8 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 flex items-center justify-center transition-colors"
                 title="Remove item"
               >
                 <Trash2 className="w-4 h-4" />

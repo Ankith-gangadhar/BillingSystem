@@ -40,7 +40,7 @@ export function createServerApp() {
   app.use('/api/settings', settingsRouter);
 
   // Health Check
-  app.get('/api/health', (_req, res) => {
+  app.get('/api/health', (_req: express.Request, res: express.Response) => {
     res.json({ status: 'ok', time: new Date().toISOString() });
   });
 

@@ -1,0 +1,14 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.authRouter = void 0;
+const express_1 = require("express");
+const authController_1 = require("../controllers/authController");
+const authMiddleware_1 = require("../middleware/authMiddleware");
+exports.authRouter = (0, express_1.Router)();
+exports.authRouter.get('/users', authController_1.AuthController.getUsers);
+exports.authRouter.post('/login', authController_1.AuthController.login);
+exports.authRouter.post('/verify-admin-pin', authMiddleware_1.authMiddleware, authController_1.AuthController.verifyAdminPin);
+exports.authRouter.get('/owner-presence', authController_1.AuthController.getOwnerPresence);
+exports.authRouter.post('/owner-presence', authMiddleware_1.authMiddleware, authController_1.AuthController.toggleOwnerPresence);
+exports.authRouter.put('/profile', authMiddleware_1.authMiddleware, authController_1.AuthController.updateProfile);
+exports.authRouter.post('/users', authMiddleware_1.authMiddleware, authMiddleware_1.requireAdmin, authController_1.AuthController.createUser);

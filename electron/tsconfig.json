@@ -4,9 +4,9 @@
     "module": "CommonJS",
     "moduleResolution": "Node",
     "outDir": "../dist/electron",
-    "rootDir": "./",
     "strict": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "esModuleInterop": true
   },
-  "include": ["./**/*"]
+  "include": ["./**/*", "../server/**/*", "../shared/**/*"]
 }

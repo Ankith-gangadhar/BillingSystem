@@ -29,7 +29,7 @@ const AppContent: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-slate-100 dark:bg-slate-950 font-sans">
+    <div className="flex flex-col h-screen w-screen overflow-hidden bg-slate-900/10 dark:bg-slate-950/40 font-sans backdrop-blur-xs">
       <Header onOpenHelp={() => setIsHelpOpen(true)} />
 
       <div className="flex-1 flex overflow-hidden">

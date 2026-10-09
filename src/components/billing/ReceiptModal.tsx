@@ -22,24 +22,29 @@ export const ReceiptModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 z-50 animate-in fade-in-50 duration-150 select-none">
-      <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+    <div className="fixed inset-0 bg-slate-950/65 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-50 animate-in fade-in-50 duration-200 select-none">
+      <div className="neu-modal rounded-3xl max-w-md w-full overflow-hidden flex flex-col max-h-[92vh] text-slate-800 dark:text-slate-100">
         {/* Modal Header */}
-        <div className="p-4 bg-coastal-900 text-white flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-2">
-            <Printer className="w-5 h-5 text-saffron-400" />
-            <h3 className="font-bold text-base">Receipt Preview</h3>
+        <div className="px-5 py-3.5 bg-gradient-to-r from-coastal-900 via-coastal-800 to-coastal-900 text-white flex items-center justify-between shrink-0 shadow-sm border-b border-white/10">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center shadow-inner">
+              <Printer className="w-4 h-4 text-saffron-400" />
+            </div>
+            <div>
+              <h3 className="font-extrabold text-base tracking-tight leading-none">Receipt Preview</h3>
+              <p className="text-[11px] text-coastal-200 font-medium mt-0.5">Ready for 80mm Print & Sharing</p>
+            </div>
           </div>
           <button
             onClick={() => setIsReceiptModalOpen(false)}
-            className="w-8 h-8 rounded-full bg-coastal-800 hover:bg-coastal-700 flex items-center justify-center text-coastal-200"
+            className="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 active:bg-white/30 border border-white/10 flex items-center justify-center text-coastal-100 transition-all active:scale-95"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Receipt Thermal Card (80mm Width Style) */}
-        <div className="p-3 sm:p-4 overflow-y-auto flex-1 bg-slate-100 dark:bg-slate-950 flex justify-center items-start min-h-0">
+        <div className="p-3 sm:p-4 overflow-y-auto flex-1 neu-inset flex justify-center items-start min-h-0">
           <div
             id="printable-receipt"
             ref={receiptRef}
@@ -166,11 +171,11 @@ export const ReceiptModal: React.FC = () => {
         </div>
 
         {/* Modal Actions */}
-        <div className="p-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex gap-2">
+        <div className="p-4 bg-slate-100/70 dark:bg-slate-900/70 border-t border-slate-200/80 dark:border-slate-800/80 flex gap-2.5 shrink-0">
           <button
             type="button"
             onClick={handleWhatsAppShare}
-            className="px-3 py-2.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 font-bold text-xs flex items-center gap-1.5 border border-emerald-200 dark:border-emerald-800"
+            className="neu-btn px-4 py-3 rounded-2xl text-emerald-700 dark:text-emerald-300 font-bold text-xs flex items-center gap-2 border border-emerald-500/30"
             title="Share via WhatsApp"
           >
             <Share2 className="w-4 h-4" />
@@ -180,16 +185,16 @@ export const ReceiptModal: React.FC = () => {
           <button
             type="button"
             onClick={handlePrint}
-            className="flex-1 py-3 rounded-2xl bg-coastal-800 hover:bg-coastal-700 text-white font-extrabold text-sm flex items-center justify-center gap-2 shadow-md shadow-coastal-800/20"
+            className="neu-btn-primary flex-1 py-3.5 rounded-2xl font-black text-sm flex items-center justify-center gap-2"
           >
-            <Printer className="w-4 h-4 text-saffron-400" />
+            <Printer className="w-4 h-4 text-saffron-300" />
             <span>Print Receipt</span>
           </button>
 
           <button
             type="button"
             onClick={() => setIsReceiptModalOpen(false)}
-            className="px-4 py-3 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-sm"
+            className="neu-btn px-5 py-3 rounded-2xl text-slate-700 dark:text-slate-300 font-bold text-xs"
           >
             Done
           </button>

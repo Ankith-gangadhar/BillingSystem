@@ -38,16 +38,16 @@ export const TotalsPanel: React.FC = () => {
   };
 
   return (
-    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-2.5 sm:p-3 rounded-2xl shadow-xs shrink-0 select-none">
+    <div className="glass-panel p-3.5 sm:p-4 rounded-3xl shrink-0 select-none text-slate-800 dark:text-slate-100 shadow-xl">
       {/* Financial Breakdown Rows */}
-      <div className="space-y-1 text-xs text-slate-600 dark:text-slate-400 mb-2">
-        <div className="flex justify-between items-center font-medium">
+      <div className="space-y-1.5 text-xs text-slate-600 dark:text-slate-400 mb-3">
+        <div className="flex justify-between items-center font-medium px-1">
           <span>Subtotal ({totalItemsCount} items):</span>
-          <span className="font-semibold text-slate-900 dark:text-slate-200">{formatPaise(subtotal)}</span>
+          <span className="font-extrabold text-slate-900 dark:text-slate-200">{formatPaise(subtotal)}</span>
         </div>
 
         {/* Optional Carry Bag Row (Editable) */}
-        <div className="flex items-center justify-between py-1 px-1.5 bg-slate-50 dark:bg-slate-800/40 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/60">
+        <div className="flex items-center justify-between py-1.5 px-2.5 glass-inset rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300">
           <label className="flex items-center gap-1.5 cursor-pointer select-none">
             <input
               type="checkbox"
@@ -63,7 +63,7 @@ export const TotalsPanel: React.FC = () => {
           <button
             type="button"
             onClick={handleEditBagCharge}
-            className="text-[10px] text-coastal-600 dark:text-coastal-400 font-bold underline hover:text-coastal-800"
+            className="text-[10px] text-coastal-700 dark:text-coastal-300 font-bold underline hover:text-coastal-900 dark:hover:text-coastal-100"
             title="Edit carry bag price"
           >
             Edit (₹{(carryBagChargePaise / 100).toFixed(0)})
@@ -71,7 +71,7 @@ export const TotalsPanel: React.FC = () => {
         </div>
 
         {totalDiscount > 0 && (
-          <div className="flex justify-between items-center text-rose-600 dark:text-rose-400 font-semibold">
+          <div className="flex justify-between items-center text-rose-600 dark:text-rose-400 font-bold px-1">
             <span className="flex items-center gap-1">
               <Tag className="w-3.5 h-3.5" /> Total Discount:
             </span>
@@ -80,37 +80,37 @@ export const TotalsPanel: React.FC = () => {
         )}
 
         {settings?.gst_enabled && taxTotal > 0 && (
-          <div className="flex justify-between items-center text-[11px]">
+          <div className="flex justify-between items-center text-[11px] px-1 font-medium">
             <span>GST Amount:</span>
             <span>{formatPaise(taxTotal)}</span>
           </div>
         )}
 
         {settings?.round_off_enabled && roundOff !== 0 && (
-          <div className="flex justify-between items-center text-[10px] text-slate-400">
+          <div className="flex justify-between items-center text-[10px] text-slate-400 px-1 font-medium">
             <span>Round Off:</span>
             <span>{roundOff > 0 ? `+${formatPaise(roundOff)}` : formatPaise(roundOff)}</span>
           </div>
         )}
       </div>
 
-      {/* Hero Grand Total */}
-      <div className="flex items-baseline justify-between py-1.5 border-y border-slate-100 dark:border-slate-800 mb-2">
-        <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+      {/* Hero Grand Total Display */}
+      <div className="glass-inset px-3.5 py-2.5 rounded-2xl flex items-baseline justify-between mb-3 border border-white/60 dark:border-white/10">
+        <span className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-slate-600 dark:text-slate-300">
           Grand Total
         </span>
-        <span className="text-xl sm:text-2xl font-black text-coastal-800 dark:text-coastal-400 tracking-tight">
+        <span className="text-xl sm:text-2xl font-black text-coastal-800 dark:text-coastal-300 tracking-tight drop-shadow-xs">
           {formatPaise(grandTotal)}
         </span>
       </div>
 
-      {/* Quick Action Helpers & Complete Sale Button */}
-      <div className="grid grid-cols-3 gap-1.5 mb-2">
+      {/* Quick Action Helpers */}
+      <div className="grid grid-cols-3 gap-1.5 mb-3">
         <button
           type="button"
           disabled={isEmpty}
           onClick={() => setIsDiscountModalOpen(true)}
-          className="flex items-center justify-center gap-1 py-1.5 px-1 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-[11px] font-bold transition-all disabled:opacity-40"
+          className="glass-btn flex items-center justify-center gap-1 py-2 px-1 rounded-xl text-slate-700 dark:text-slate-200 text-[11px] font-bold disabled:opacity-40"
           title="Discount / Set Final Price (F8)"
         >
           <Tag className="w-3 h-3 text-saffron-500" />
@@ -121,7 +121,7 @@ export const TotalsPanel: React.FC = () => {
           type="button"
           disabled={isEmpty}
           onClick={holdBill}
-          className="flex items-center justify-center gap-1 py-1.5 px-1 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-[11px] font-bold transition-all disabled:opacity-40"
+          className="glass-btn flex items-center justify-center gap-1 py-2 px-1 rounded-xl text-slate-700 dark:text-slate-200 text-[11px] font-bold disabled:opacity-40"
           title="Hold current sale / Open new cart (F6)"
         >
           <PauseCircle className="w-3 h-3 text-amber-500" />
@@ -134,7 +134,7 @@ export const TotalsPanel: React.FC = () => {
           onClick={() => {
             if (confirm('Clear current cart?')) clearCart();
           }}
-          className="flex items-center justify-center gap-1 py-1.5 px-1 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-50 text-slate-500 hover:text-rose-600 text-[11px] font-bold transition-all disabled:opacity-40"
+          className="glass-btn flex items-center justify-center gap-1 py-2 px-1 rounded-xl text-slate-500 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400 text-[11px] font-bold disabled:opacity-40"
           title="Clear Cart"
         >
           <Trash2 className="w-3 h-3" />
@@ -147,10 +147,10 @@ export const TotalsPanel: React.FC = () => {
         type="button"
         disabled={isEmpty}
         onClick={() => setIsPaymentModalOpen(true)}
-        className="w-full h-11 sm:h-12 rounded-xl bg-coastal-800 hover:bg-coastal-700 text-white font-extrabold text-base flex items-center justify-center gap-2 shadow-md shadow-coastal-800/25 active:scale-[0.99] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
+        className="glass-btn-primary w-full h-12.5 rounded-2xl font-black text-base flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed shadow-lg"
       >
         <span>Complete Sale (F9)</span>
-        <ArrowRight className="w-4 h-4 text-saffron-400" />
+        <ArrowRight className="w-4 h-4 text-saffron-300" />
       </button>
     </div>
   );

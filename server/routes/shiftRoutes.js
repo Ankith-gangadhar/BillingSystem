@@ -1,0 +1,15 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.shiftRouter = void 0;
+const express_1 = require("express");
+const shiftController_1 = require("../controllers/shiftController");
+const authMiddleware_1 = require("../middleware/authMiddleware");
+exports.shiftRouter = (0, express_1.Router)();
+exports.shiftRouter.post('/start', authMiddleware_1.authMiddleware, shiftController_1.ShiftController.start);
+exports.shiftRouter.get('/current', authMiddleware_1.authMiddleware, shiftController_1.ShiftController.getCurrent);
+exports.shiftRouter.post('/cash-events', authMiddleware_1.authMiddleware, shiftController_1.ShiftController.addCashEvent);
+exports.shiftRouter.post('/:id/close', authMiddleware_1.authMiddleware, shiftController_1.ShiftController.close);
+exports.shiftRouter.get('/', authMiddleware_1.authMiddleware, authMiddleware_1.requireAdmin, shiftController_1.ShiftController.getAll);
+exports.shiftRouter.get('/activity-report', authMiddleware_1.authMiddleware, authMiddleware_1.requireAdmin, shiftController_1.ShiftController.getActivityReport);
+exports.shiftRouter.post('/day-close', authMiddleware_1.authMiddleware, authMiddleware_1.requireAdmin, shiftController_1.ShiftController.closeDay);
+exports.shiftRouter.get('/day-closings', authMiddleware_1.authMiddleware, authMiddleware_1.requireAdmin, shiftController_1.ShiftController.getDayClosings);

@@ -131,7 +131,7 @@ export const ProductSearch: React.FC = () => {
   return (
     <div className="relative w-full z-30">
       <div className="relative flex items-center">
-        <div className="absolute left-3.5 pointer-events-none text-slate-400">
+        <div className="absolute left-4 pointer-events-none text-coastal-700 dark:text-coastal-400">
           <Search className="w-5 h-5" />
         </div>
         <input
@@ -144,16 +144,16 @@ export const ProductSearch: React.FC = () => {
             if (query.trim()) setIsOpen(true);
           }}
           placeholder="Search product name, scan barcode, SKU (Press / or F2)…"
-          className="w-full h-12 pl-11 pr-24 rounded-2xl bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 focus:border-coastal-600 dark:focus:border-coastal-500 focus:ring-4 focus:ring-coastal-500/20 text-slate-900 dark:text-white font-medium placeholder:text-slate-400 text-base shadow-sm transition-all outline-none"
+          className="glass-input w-full h-12.5 pl-12 pr-28 rounded-2xl text-slate-900 dark:text-white font-medium placeholder:text-slate-400 text-sm sm:text-base outline-none transition-all shadow-sm"
         />
-        <div className="absolute right-2 flex items-center gap-1.5">
+        <div className="absolute right-2.5 flex items-center gap-1.5">
           <button
             type="button"
             onClick={() => setIsCustomItemModalOpen(true)}
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-coastal-50 dark:bg-coastal-950/50 hover:bg-coastal-100 dark:hover:bg-coastal-900 text-coastal-700 dark:text-coastal-300 border border-coastal-200 dark:border-coastal-800 text-xs font-bold transition-all"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl glass-btn text-coastal-800 dark:text-coastal-300 border border-coastal-500/30 text-xs font-extrabold transition-all"
             title="Add Custom Unlisted Item (F4)"
           >
-            <Plus className="w-3.5 h-3.5" />
+            <Plus className="w-3.5 h-3.5 text-saffron-500" />
             <span className="hidden sm:inline">Custom (F4)</span>
           </button>
         </div>
@@ -163,7 +163,7 @@ export const ProductSearch: React.FC = () => {
       {isOpen && query.trim().length > 0 && (
         <div
           ref={dropdownRef}
-          className="absolute left-0 right-0 top-14 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden max-h-[60vh] overflow-y-auto z-50 animate-in fade-in-50 duration-100"
+          className="absolute left-0 right-0 top-14.5 glass-modal rounded-3xl border border-white/20 dark:border-white/10 shadow-2xl overflow-hidden max-h-[60vh] overflow-y-auto z-50 animate-in fade-in-50 duration-100"
         >
           {results.length > 0 ? (
             <div className="divide-y divide-slate-100 dark:divide-slate-800/60">

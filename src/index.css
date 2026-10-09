@@ -6,7 +6,409 @@
   :root {
     --brand-teal: #0f766e;
     --brand-saffron: #f59e0b;
+    
+    /* Neumorphic base colors */
+    --neu-bg-light: #edf3f8;
+    --neu-surface-light: rgba(255, 255, 255, 0.7);
+    --neu-bg-dark: #0d131f;
+    --neu-surface-dark: rgba(18, 25, 38, 0.7);
   }
+
+  body {
+    background-color: var(--neu-bg-light);
+    background-image: 
+      radial-gradient(at 10% 10%, rgba(20, 184, 166, 0.12) 0px, transparent 50%),
+      radial-gradient(at 90% 15%, rgba(245, 158, 11, 0.1) 0px, transparent 50%),
+      radial-gradient(at 50% 90%, rgba(13, 148, 136, 0.1) 0px, transparent 50%),
+      radial-gradient(at 80% 80%, rgba(99, 102, 241, 0.08) 0px, transparent 50%);
+    background-attachment: fixed;
+    background-size: cover;
+  }
+
+  .dark body {
+    background-color: var(--neu-bg-dark);
+    background-image: 
+      radial-gradient(at 10% 10%, rgba(20, 184, 166, 0.15) 0px, transparent 50%),
+      radial-gradient(at 90% 15%, rgba(245, 158, 11, 0.08) 0px, transparent 50%),
+      radial-gradient(at 50% 90%, rgba(13, 148, 136, 0.12) 0px, transparent 50%),
+      radial-gradient(at 80% 80%, rgba(99, 102, 241, 0.08) 0px, transparent 50%);
+    background-attachment: fixed;
+    background-size: cover;
+  }
+}
+
+/* ==========================================================================
+   GLASSMORPHISM & NEUMORPHIC HYBRID DESIGN SYSTEM
+   ========================================================================== */
+
+/* Standard Frosted Glass Container */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.68);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.06),
+              inset 0 1px 1px rgba(255, 255, 255, 0.8);
+}
+
+.dark .glass-panel {
+  background: rgba(18, 26, 41, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4),
+              inset 0 1px 1px rgba(255, 255, 255, 0.05);
+}
+
+/* Glass Card / Tile */
+.glass-card {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04),
+              0 1px 3px rgba(15, 23, 42, 0.02);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card:hover {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(20, 184, 166, 0.5);
+  box-shadow: 0 10px 24px rgba(15, 118, 110, 0.12),
+              0 2px 6px rgba(15, 23, 42, 0.04);
+  transform: translateY(-2px);
+}
+
+.dark .glass-card {
+  background: rgba(22, 32, 50, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.dark .glass-card:hover {
+  background: rgba(27, 40, 62, 0.8);
+  border-color: rgba(45, 212, 191, 0.4);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5),
+              0 0 16px rgba(20, 184, 166, 0.15);
+  transform: translateY(-2px);
+}
+
+/* Glass Floating Dialog / Modal */
+.glass-modal {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.2),
+              0 0 1px rgba(255, 255, 255, 0.9),
+              inset 0 1px 2px rgba(255, 255, 255, 0.9);
+}
+
+.dark .glass-modal {
+  background: rgba(15, 23, 38, 0.85);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7),
+              inset 0 1px 1px rgba(255, 255, 255, 0.1);
+}
+
+/* Glass Inset / Sunken Sub-panel */
+.glass-inset {
+  background: rgba(235, 242, 250, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: inset 0 2px 6px rgba(15, 23, 42, 0.05);
+}
+
+.dark .glass-inset {
+  background: rgba(10, 16, 26, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+/* Glass Input */
+.glass-input {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(203, 213, 225, 0.7);
+  box-shadow: inset 0 2px 4px rgba(15, 23, 42, 0.04);
+  transition: all 0.2s ease;
+}
+
+.glass-input:focus {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: #0f766e;
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.2),
+              inset 0 1px 2px rgba(15, 23, 42, 0.02);
+}
+
+.dark .glass-input {
+  background: rgba(15, 23, 38, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.dark .glass-input:focus {
+  background: rgba(18, 28, 46, 0.9);
+  border-color: #2dd4bf;
+  box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.25);
+}
+
+/* Glass Buttons */
+.glass-btn {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-btn:hover {
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+  transform: translateY(-1px);
+}
+
+.glass-btn:active {
+  background: rgba(240, 245, 250, 0.85);
+  box-shadow: inset 0 2px 4px rgba(15, 23, 42, 0.06);
+  transform: translateY(1px);
+}
+
+.dark .glass-btn {
+  background: rgba(25, 36, 56, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.dark .glass-btn:hover {
+  background: rgba(32, 46, 70, 0.85);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+  transform: translateY(-1px);
+}
+
+.dark .glass-btn:active {
+  background: rgba(18, 26, 42, 0.85);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+  transform: translateY(1px);
+}
+
+/* Glass Primary Button */
+.glass-btn-primary {
+  background: linear-gradient(135deg, rgba(13, 148, 136, 0.95) 0%, rgba(15, 118, 110, 0.95) 100%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(45, 212, 191, 0.4);
+  color: #ffffff;
+  box-shadow: 0 4px 16px rgba(15, 118, 110, 0.35),
+              inset 0 1px 1px rgba(255, 255, 255, 0.4);
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-btn-primary:hover {
+  background: linear-gradient(135deg, rgba(20, 184, 166, 0.98) 0%, rgba(13, 148, 136, 0.98) 100%);
+  box-shadow: 0 8px 24px rgba(15, 118, 110, 0.45),
+              inset 0 1px 1px rgba(255, 255, 255, 0.5);
+  transform: translateY(-1px);
+}
+
+.glass-btn-primary:active {
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.3);
+  transform: translateY(1px);
+}
+
+/* Retain Neuomorphism classes for tactile interactions */
+.neu-flat {
+  background: rgba(240, 244, 249, 0.8);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 6px 6px 14px rgba(168, 180, 198, 0.4),
+              -6px -6px 14px rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+}
+
+.dark .neu-flat {
+  background: rgba(23, 32, 51, 0.75);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 6px 6px 14px rgba(0, 0, 0, 0.6),
+              -4px -4px 10px rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.neu-modal {
+  background: rgba(245, 248, 252, 0.88);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  box-shadow: 12px 12px 28px rgba(160, 175, 195, 0.45),
+              -10px -10px 24px rgba(255, 255, 255, 0.95),
+              inset 1px 1px 2px rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+}
+
+.dark .neu-modal {
+  background: rgba(20, 28, 44, 0.88);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  box-shadow: 14px 14px 32px rgba(0, 0, 0, 0.75),
+              -6px -6px 20px rgba(255, 255, 255, 0.04),
+              inset 1px 1px 1px rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dark .neu-modal {
+  background: linear-gradient(145deg, #182236, #131b2c);
+  box-shadow: 14px 14px 32px rgba(0, 0, 0, 0.75),
+              -6px -6px 20px rgba(255, 255, 255, 0.04),
+              inset 1px 1px 1px rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Inset / Sunken / Recessed Neumorphic Surface */
+.neu-inset, .neu-pressed {
+  background: #e9eff5;
+  box-shadow: inset 4px 4px 8px rgba(166, 178, 195, 0.5),
+              inset -4px -4px 8px rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(200, 212, 226, 0.4);
+}
+
+.dark .neu-inset, .dark .neu-pressed {
+  background: #111724;
+  box-shadow: inset 4px 4px 9px rgba(0, 0, 0, 0.65),
+              inset -2px -2px 6px rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(0, 0, 0, 0.4);
+}
+
+/* Shallow / Subtle Inset */
+.neu-inset-sm {
+  background: #ecf1f7;
+  box-shadow: inset 2px 2px 5px rgba(166, 178, 195, 0.4),
+              inset -2px -2px 5px rgba(255, 255, 255, 0.85);
+}
+
+.dark .neu-inset-sm {
+  background: #131a28;
+  box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.55),
+              inset -1px -1px 4px rgba(255, 255, 255, 0.03);
+}
+
+/* Neumorphic Input Fields */
+.neu-input {
+  background: #ebf0f6;
+  box-shadow: inset 3px 3px 6px rgba(166, 178, 195, 0.45),
+              inset -3px -3px 6px rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(209, 218, 229, 0.6);
+  transition: all 0.2s ease;
+}
+
+.neu-input:focus {
+  background: #f4f8fb;
+  box-shadow: inset 2px 2px 4px rgba(166, 178, 195, 0.35),
+              inset -2px -2px 4px rgba(255, 255, 255, 0.9),
+              0 0 0 2px rgba(15, 118, 110, 0.35);
+  border-color: #0f766e;
+}
+
+.dark .neu-input {
+  background: #101622;
+  box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.65),
+              inset -2px -2px 5px rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.dark .neu-input:focus {
+  background: #141c2c;
+  box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.55),
+              inset -1px -1px 3px rgba(255, 255, 255, 0.04),
+              0 0 0 2px rgba(45, 212, 191, 0.3);
+  border-color: #2dd4bf;
+}
+
+/* Neumorphic Tactile Buttons */
+.neu-btn {
+  background: linear-gradient(145deg, #f4f8fc, #eaf0f6);
+  box-shadow: 4px 4px 10px rgba(168, 180, 198, 0.45),
+              -4px -4px 10px rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.neu-btn:hover {
+  box-shadow: 5px 5px 12px rgba(168, 180, 198, 0.55),
+              -5px -5px 12px rgba(255, 255, 255, 0.95);
+  transform: translateY(-1px);
+}
+
+.neu-btn:active {
+  box-shadow: inset 3px 3px 6px rgba(166, 178, 195, 0.5),
+              inset -3px -3px 6px rgba(255, 255, 255, 0.85);
+  transform: translateY(1px);
+}
+
+.dark .neu-btn {
+  background: linear-gradient(145deg, #1a2438, #141c2c);
+  box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.6),
+              -2px -2px 6px rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.dark .neu-btn:hover {
+  box-shadow: 5px 5px 14px rgba(0, 0, 0, 0.7),
+              -3px -3px 8px rgba(255, 255, 255, 0.06);
+  transform: translateY(-1px);
+}
+
+.dark .neu-btn:active {
+  box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.7),
+              inset -1px -1px 4px rgba(255, 255, 255, 0.04);
+  transform: translateY(1px);
+}
+
+/* Primary Hero Neumorphic Button (Teal / Coastal Gradient) */
+.neu-btn-primary {
+  background: linear-gradient(135deg, #0d9488 0%, #0f766e 60%, #115e59 100%);
+  box-shadow: 5px 5px 14px rgba(15, 118, 110, 0.35),
+              -3px -3px 8px rgba(255, 255, 255, 0.8),
+              inset 0 1px 1px rgba(255, 255, 255, 0.35);
+  border: 1px solid rgba(45, 212, 191, 0.3);
+  color: #ffffff;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.neu-btn-primary:hover {
+  background: linear-gradient(135deg, #14b8a6 0%, #0d9488 60%, #0f766e 100%);
+  box-shadow: 6px 6px 18px rgba(15, 118, 110, 0.45),
+              -4px -4px 10px rgba(255, 255, 255, 0.9),
+              inset 0 1px 1px rgba(255, 255, 255, 0.45);
+  transform: translateY(-1px);
+}
+
+.neu-btn-primary:active {
+  box-shadow: inset 3px 3px 8px rgba(0, 0, 0, 0.4),
+              inset -2px -2px 6px rgba(255, 255, 255, 0.15);
+  transform: translateY(1px);
+}
+
+.dark .neu-btn-primary {
+  background: linear-gradient(135deg, #14b8a6 0%, #0f766e 70%, #042f2e 100%);
+  box-shadow: 5px 5px 16px rgba(0, 0, 0, 0.7),
+              -2px -2px 8px rgba(20, 184, 166, 0.2),
+              inset 0 1px 1px rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(45, 212, 191, 0.3);
+}
+
+.dark .neu-btn-primary:hover {
+  box-shadow: 6px 6px 20px rgba(0, 0, 0, 0.8),
+              -3px -3px 10px rgba(45, 212, 191, 0.3),
+              inset 0 1px 1px rgba(255, 255, 255, 0.4);
 }
 
 /* Custom Scrollbar */
@@ -80,3 +482,4 @@ input[type=number] {
 .animate-pulse-subtle {
   animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
+

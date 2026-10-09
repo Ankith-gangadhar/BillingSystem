@@ -1,0 +1,14 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.billRouter = void 0;
+const express_1 = require("express");
+const billController_1 = require("../controllers/billController");
+const authMiddleware_1 = require("../middleware/authMiddleware");
+exports.billRouter = (0, express_1.Router)();
+exports.billRouter.post('/', authMiddleware_1.authMiddleware, billController_1.BillController.createSale);
+exports.billRouter.post('/hold', authMiddleware_1.authMiddleware, billController_1.BillController.holdSale);
+exports.billRouter.get('/held', authMiddleware_1.authMiddleware, billController_1.BillController.getHeldBills);
+exports.billRouter.get('/custom-items/review', authMiddleware_1.authMiddleware, authMiddleware_1.requireAdmin, billController_1.BillController.getCustomItemsReview);
+exports.billRouter.get('/', authMiddleware_1.authMiddleware, billController_1.BillController.getAll);
+exports.billRouter.get('/:id', authMiddleware_1.authMiddleware, billController_1.BillController.getById);
+exports.billRouter.post('/:id/void', authMiddleware_1.authMiddleware, authMiddleware_1.requireAdmin, billController_1.BillController.void);

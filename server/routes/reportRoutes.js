@@ -1,0 +1,13 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.reportRouter = void 0;
+const express_1 = require("express");
+const reportController_1 = require("../controllers/reportController");
+const authMiddleware_1 = require("../middleware/authMiddleware");
+exports.reportRouter = (0, express_1.Router)();
+exports.reportRouter.get('/dashboard', authMiddleware_1.authMiddleware, reportController_1.ReportController.getDashboard);
+exports.reportRouter.get('/product-sales', authMiddleware_1.authMiddleware, authMiddleware_1.requireAdmin, reportController_1.ReportController.getProductSales);
+exports.reportRouter.get('/category-sales', authMiddleware_1.authMiddleware, authMiddleware_1.requireAdmin, reportController_1.ReportController.getCategorySales);
+exports.reportRouter.get('/discounts', authMiddleware_1.authMiddleware, authMiddleware_1.requireAdmin, reportController_1.ReportController.getDiscounts);
+exports.reportRouter.get('/inventory-valuation', authMiddleware_1.authMiddleware, authMiddleware_1.requireAdmin, reportController_1.ReportController.getInventoryValuation);
+exports.reportRouter.get('/hourly-heatmap', authMiddleware_1.authMiddleware, authMiddleware_1.requireAdmin, reportController_1.ReportController.getHourlyHeatmap);

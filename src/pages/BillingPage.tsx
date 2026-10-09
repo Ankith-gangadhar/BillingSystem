@@ -102,7 +102,7 @@ export const BillingPage: React.FC = () => {
   ]);
 
   return (
-    <div className="flex-1 flex flex-row h-full overflow-hidden bg-slate-100 dark:bg-slate-950 p-2 sm:p-2.5 gap-2 sm:gap-2.5">
+    <div className="flex-1 flex flex-row h-full overflow-hidden p-2 sm:p-2.5 gap-2 sm:gap-2.5">
       {/* Left Column: Search & Quick Catalog */}
       <div className="flex-1 flex flex-col gap-2 min-w-0 h-full overflow-hidden">
         {/* Search Bar */}
@@ -111,11 +111,11 @@ export const BillingPage: React.FC = () => {
         </div>
 
         {/* Quick Buttons / Catalog */}
-        <div className="flex-1 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden flex flex-col min-h-0">
-          <div className="px-3 py-1.5 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-200 shrink-0">
-            <span>Quick Touch Catalog</span>
+        <div className="flex-1 glass-panel rounded-3xl overflow-hidden flex flex-col min-h-0">
+          <div className="px-4 py-2 bg-white/40 dark:bg-slate-900/40 border-b border-white/15 dark:border-white/5 flex items-center justify-between text-xs font-extrabold text-slate-700 dark:text-slate-200 shrink-0">
+            <span className="tracking-wide">Quick Touch Catalog</span>
             {currentShift && (
-              <span className="text-coastal-700 dark:text-coastal-400 flex items-center gap-1 font-semibold text-[11px]">
+              <span className="text-coastal-700 dark:text-coastal-300 flex items-center gap-1 font-bold text-[11px] bg-coastal-500/10 px-2.5 py-0.5 rounded-full border border-coastal-500/20">
                 <Clock className="w-3.5 h-3.5" /> Shift Active
               </span>
             )}
@@ -129,9 +129,9 @@ export const BillingPage: React.FC = () => {
       {/* Right Column: Multi-Cart Tabs & Totals Checkout */}
       <div className="w-[340px] sm:w-[370px] md:w-[390px] lg:w-[420px] xl:w-[450px] flex flex-col h-full shrink-0 gap-2 overflow-hidden">
         {/* Cart Container with Multi-Cart Tabs */}
-        <div className="flex-1 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden flex flex-col min-h-0">
+        <div className="flex-1 glass-panel rounded-3xl overflow-hidden flex flex-col min-h-0">
           {/* Multi-Cart Tab Strip */}
-          <div className="px-2 py-1.5 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-1.5 shrink-0 overflow-x-auto">
+          <div className="px-3 py-2 bg-white/40 dark:bg-slate-900/40 border-b border-white/15 dark:border-white/5 flex items-center justify-between gap-1.5 shrink-0 overflow-x-auto">
             <div className="flex items-center gap-1.5 min-w-0">
               {cartSessions.map((session, index) => {
                 const isActive = session.id === activeSessionId;
@@ -142,17 +142,17 @@ export const BillingPage: React.FC = () => {
                   <div
                     key={session.id}
                     onClick={() => switchCartSession(session.id)}
-                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold cursor-pointer transition-all ${
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold cursor-pointer transition-all ${
                       isActive
-                        ? 'bg-coastal-800 text-white shadow-xs'
-                        : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 border border-slate-200 dark:border-slate-700'
+                        ? 'glass-btn-primary shadow-md ring-1 ring-white/20'
+                        : 'glass-btn text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
                     }`}
                   >
                     <span>{cartDisplayName}</span>
                     {itemsCount > 0 && (
                       <span
                         className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
-                          isActive ? 'bg-saffron-400 text-slate-950' : 'bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200'
+                          isActive ? 'bg-saffron-400 text-slate-950' : 'bg-slate-200/80 dark:bg-slate-700 text-slate-800 dark:text-slate-200'
                         }`}
                       >
                         {itemsCount}
@@ -168,7 +168,7 @@ export const BillingPage: React.FC = () => {
                           }
                         }}
                         className={`ml-0.5 p-0.5 rounded hover:text-rose-400 text-[10px] ${
-                          isActive ? 'text-coastal-200' : 'text-slate-400'
+                          isActive ? 'text-coastal-100' : 'text-slate-400'
                         }`}
                         title="Close cart tab"
                       >
@@ -184,16 +184,16 @@ export const BillingPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={createCartSession}
-                  className="flex items-center gap-1 px-2 py-1 rounded-xl bg-coastal-50 dark:bg-coastal-950/60 hover:bg-coastal-100 text-coastal-800 dark:text-coastal-300 border border-coastal-200 dark:border-coastal-800 text-xs font-bold transition-all"
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-coastal-500/10 hover:bg-coastal-500/20 text-coastal-800 dark:text-coastal-300 border border-coastal-500/30 text-xs font-bold transition-all"
                   title="Add new cart tab / Hold current (F6)"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span className="text-[11px] font-extrabold">+ Cart (F6)</span>
+                  <span className="text-[11px] font-black">+ Cart (F6)</span>
                 </button>
               )}
             </div>
 
-            <span className="text-[10px] text-slate-400 font-normal shrink-0 hidden sm:inline">
+            <span className="text-[10px] text-slate-400 font-medium shrink-0 hidden sm:inline">
               Auto-saved
             </span>
           </div>

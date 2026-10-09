@@ -1,0 +1,10 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.backupRouter = void 0;
+const express_1 = require("express");
+const backupController_1 = require("../controllers/backupController");
+const authMiddleware_1 = require("../middleware/authMiddleware");
+exports.backupRouter = (0, express_1.Router)();
+exports.backupRouter.get('/', authMiddleware_1.authMiddleware, authMiddleware_1.requireAdmin, backupController_1.BackupController.getAll);
+exports.backupRouter.post('/create', authMiddleware_1.authMiddleware, authMiddleware_1.requireAdmin, backupController_1.BackupController.create);
+exports.backupRouter.post('/restore', authMiddleware_1.authMiddleware, authMiddleware_1.requireAdmin, backupController_1.BackupController.restore);

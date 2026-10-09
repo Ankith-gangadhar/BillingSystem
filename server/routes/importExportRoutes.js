@@ -1,0 +1,13 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.importExportRouter = void 0;
+const express_1 = require("express");
+const multer_1 = require("multer");
+const importExportController_1 = require("../controllers/importExportController");
+const authMiddleware_1 = require("../middleware/authMiddleware");
+exports.importExportRouter = (0, express_1.Router)();
+const upload = (0, multer_1.default)({ storage: multer_1.default.memoryStorage(), limits: { fileSize: 15 * 1024 * 1024 } });
+exports.importExportRouter.get('/template', importExportController_1.ImportExportController.getTemplate);
+exports.importExportRouter.post('/preview', authMiddleware_1.authMiddleware, authMiddleware_1.requireAdmin, upload.single('file'), importExportController_1.ImportExportController.preview);
+exports.importExportRouter.post('/execute', authMiddleware_1.authMiddleware, authMiddleware_1.requireAdmin, importExportController_1.ImportExportController.execute);
+exports.importExportRouter.get('/export/:type', authMiddleware_1.authMiddleware, authMiddleware_1.requireAdmin, importExportController_1.ImportExportController.exportData);

@@ -1,0 +1,11 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.stockRouter = void 0;
+const express_1 = require("express");
+const stockController_1 = require("../controllers/stockController");
+const authMiddleware_1 = require("../middleware/authMiddleware");
+exports.stockRouter = (0, express_1.Router)();
+exports.stockRouter.get('/card/:productId', authMiddleware_1.authMiddleware, authMiddleware_1.requireAdmin, stockController_1.StockController.getStockCard);
+exports.stockRouter.post('/adjust', authMiddleware_1.authMiddleware, authMiddleware_1.requireAdmin, stockController_1.StockController.adjust);
+exports.stockRouter.post('/reconcile', authMiddleware_1.authMiddleware, authMiddleware_1.requireAdmin, stockController_1.StockController.reconcile);
+exports.stockRouter.get('/integrity', authMiddleware_1.authMiddleware, authMiddleware_1.requireAdmin, stockController_1.StockController.getIntegrity);

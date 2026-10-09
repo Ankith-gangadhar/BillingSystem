@@ -95,16 +95,16 @@ export const QuickButtons: React.FC = () => {
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Category Tab Strip */}
-      <div className="flex items-center gap-1.5 p-2 overflow-x-auto shrink-0 border-b border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 scrollbar-none">
+      <div className="flex items-center gap-2 p-2.5 overflow-x-auto shrink-0 border-b border-white/10 bg-white/20 dark:bg-slate-900/30 scrollbar-none">
         <button
           onClick={() => setSelectedCatId('all')}
-          className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all ${
+          className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-extrabold shrink-0 transition-all ${
             selectedCatId === 'all'
-              ? 'bg-coastal-800 text-white shadow-sm'
-              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+              ? 'glass-btn-primary shadow-md ring-1 ring-white/20'
+              : 'glass-btn text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white'
           }`}
         >
-          <Sparkles className="w-3.5 h-3.5 text-saffron-400" />
+          <Sparkles className="w-3.5 h-3.5 text-saffron-300" />
           <span>All Top Sellers</span>
         </button>
 
@@ -116,10 +116,10 @@ export const QuickButtons: React.FC = () => {
             <button
               key={cat.id}
               onClick={() => setSelectedCatId(cat.id)}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all ${
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold shrink-0 transition-all ${
                 isSelected
-                  ? 'bg-coastal-800 text-white shadow-sm'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+                  ? 'glass-btn-primary shadow-md ring-1 ring-white/20'
+                  : 'glass-btn text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white'
               }`}
             >
               <span className={`w-2 h-2 rounded-full ${style.dot}`} />
@@ -129,8 +129,8 @@ export const QuickButtons: React.FC = () => {
         })}
       </div>
 
-      {/* Spacious, Uniform Product Cards (Packed tightly at top with no gap between rows) */}
-      <div className="flex-1 p-2.5 sm:p-3 grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 overflow-y-auto min-h-0 content-start auto-rows-max">
+      {/* Spacious, Uniform Product Cards (Packed tightly at top with frosted glass styling) */}
+      <div className="flex-1 p-3 grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 overflow-y-auto min-h-0 content-start auto-rows-max">
         {displayedProducts.map((prod) => {
           const style = getCategoryTextColor(prod.category_name, prod.category_id);
           const isOutOfStock = prod.current_stock <= 0;
@@ -139,36 +139,36 @@ export const QuickButtons: React.FC = () => {
             <button
               key={prod.id}
               onClick={() => addItem(prod)}
-              className="group relative flex flex-col justify-between p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-coastal-500 dark:hover:border-coastal-500 hover:shadow-md transition-all text-left h-[105px] sm:h-[110px] w-full shrink-0 active:scale-[0.98] select-none"
+              className="group relative flex flex-col justify-between p-3.5 rounded-2xl sm:rounded-3xl glass-card text-left h-[108px] sm:h-[114px] w-full shrink-0 active:scale-[0.98] select-none cursor-pointer"
             >
               {/* Category label with colored indicator */}
               <div>
                 <div className="flex items-center justify-between gap-1">
                   <div className="flex items-center gap-1.5 min-w-0">
                     <span className={`w-1.5 h-1.5 rounded-full ${style.dot} shrink-0`} />
-                    <span className={`text-[10px] font-bold uppercase tracking-wider block truncate ${style.text}`}>
+                    <span className={`text-[10px] font-extrabold uppercase tracking-wider block truncate ${style.text}`}>
                       {prod.category_name || 'Item'}
                     </span>
                   </div>
                   {isOutOfStock && (
-                    <span className="text-[9px] font-bold uppercase text-rose-600 bg-rose-50 dark:bg-rose-950 px-1.5 py-0.2 rounded shrink-0">
+                    <span className="text-[9px] font-bold uppercase text-rose-600 bg-rose-500/15 border border-rose-500/30 px-1.5 py-0.2 rounded-full shrink-0">
                       Out
                     </span>
                   )}
                 </div>
 
-                {/* Product Name (Full visibility, crisp 2-line clamp) */}
-                <h4 className="font-bold text-xs sm:text-[13px] text-slate-800 dark:text-slate-100 line-clamp-2 leading-snug mt-1">
+                {/* Product Name */}
+                <h4 className="font-bold text-xs sm:text-[13px] text-slate-800 dark:text-slate-100 line-clamp-2 leading-snug mt-1 group-hover:text-coastal-700 dark:group-hover:text-coastal-300 transition-colors">
                   {prod.name}
                 </h4>
               </div>
 
               {/* Price & Unit */}
-              <div className="flex items-baseline justify-between pt-1.5 border-t border-slate-100 dark:border-slate-800/80 shrink-0">
+              <div className="flex items-baseline justify-between pt-1.5 border-t border-slate-200/60 dark:border-white/10 shrink-0">
                 <span className="font-black text-sm sm:text-base text-coastal-800 dark:text-coastal-300">
                   {formatPaise(prod.selling_price)}
                 </span>
-                <span className="text-[11px] font-semibold text-slate-400 capitalize">
+                <span className="text-[11px] font-bold text-slate-400 capitalize">
                   {prod.unit}
                 </span>
               </div>

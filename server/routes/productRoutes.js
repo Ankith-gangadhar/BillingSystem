@@ -1,0 +1,15 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.productRouter = void 0;
+const express_1 = require("express");
+const productController_1 = require("../controllers/productController");
+const authMiddleware_1 = require("../middleware/authMiddleware");
+exports.productRouter = (0, express_1.Router)();
+exports.productRouter.get('/search', authMiddleware_1.authMiddleware, productController_1.ProductController.search);
+exports.productRouter.get('/quick-buttons', authMiddleware_1.authMiddleware, productController_1.ProductController.getQuickButtons);
+exports.productRouter.get('/categories', authMiddleware_1.authMiddleware, productController_1.ProductController.getCategories);
+exports.productRouter.get('/suppliers', authMiddleware_1.authMiddleware, productController_1.ProductController.getSuppliers);
+exports.productRouter.get('/', authMiddleware_1.authMiddleware, productController_1.ProductController.getAll);
+exports.productRouter.post('/', authMiddleware_1.authMiddleware, authMiddleware_1.requireAdmin, productController_1.ProductController.create);
+exports.productRouter.put('/:id', authMiddleware_1.authMiddleware, authMiddleware_1.requireAdmin, productController_1.ProductController.update);
+exports.productRouter.delete('/:id', authMiddleware_1.authMiddleware, authMiddleware_1.requireAdmin, productController_1.ProductController.delete);
